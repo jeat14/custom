@@ -437,6 +437,49 @@ export function VaultAssetEntry() {
     }
   }
 
+  const openBillingPortal = async () => {
+    setError(null)
+    setNotice(null)
+    const client = supabase!
+    const { data: sessionData } = await client.auth.getSession()
+    if (!sessionData.session) {
+      setNotice('Sign in required')
+      return
+    }
+
+    const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL as string | undefined
+    const supabaseAnonKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY as string | undefined
+    if (!supabaseUrl || !supabaseAnonKey) {
+      setError('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY')
+      return
+    }
+
+    const res = await fetch(`${supabaseUrl.replace(/\/$/, '')}/functions/v1/stripe-portal`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: supabaseAnonKey,
+        Authorization: `Bearer ${supabaseAnonKey}`,
+        'x-user-jwt': sessionData.session.access_token,
+      },
+      body: JSON.stringify({ return_url: `${window.location.origin}/vault` }),
+    })
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => '')
+      setError(text ? `Portal failed (${res.status}): ${text}` : `Portal failed (${res.status})`)
+      return
+    }
+
+    const data = (await res.json().catch(() => null)) as null | { url?: string }
+    const url = data?.url
+    if (!url) {
+      setError('Missing portal url')
+      return
+    }
+    window.location.assign(url)
+  }
+
   const unlock = async () => {
     setError(null)
     setNotice(null)
@@ -735,9 +778,14 @@ export function VaultAssetEntry() {
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             {billingPlan === 'pro' ? (
-              <div className="pill" style={{ fontSize: 12 }}>
-                Pro
-              </div>
+              <>
+                <div className="pill" style={{ fontSize: 12 }}>
+                  Pro
+                </div>
+                <button type="button" onClick={() => void openBillingPortal()} disabled={!isConnected}>
+                  Manage Billing
+                </button>
+              </>
             ) : billingPlan === 'free' ? (
               <button type="button" onClick={() => void startCheckout()} disabled={!isConnected || isStartingCheckout}>
                 {isStartingCheckout ? 'Opening…' : 'Upgrade'}
