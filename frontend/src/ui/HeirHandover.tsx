@@ -70,6 +70,7 @@ export function HeirHandover() {
   const [shareBPackage, setShareBPackage] = useState<ShareBPackage | null>(null)
   const [verification, setVerification] = useState<VerificationRow | null>(null)
   const [proofFile, setProofFile] = useState<File | null>(null)
+  const [supportingFile, setSupportingFile] = useState<File | null>(null)
   const [isSubmittingProof, setIsSubmittingProof] = useState(false)
 
   const [keyMaterial, setKeyMaterial] = useState<KeyMaterialRow | null>(null)
@@ -279,12 +280,24 @@ export function HeirHandover() {
       const { error: uploadErr } = await client.storage.from('proof-of-death').upload(path, proofFile, { upsert: true })
       if (uploadErr) throw uploadErr
 
+      let supportingPath: string | null = null
+      if (supportingFile) {
+        const ext2 = supportingFile.name.includes('.') ? supportingFile.name.split('.').pop() : 'bin'
+        const safeExt2 = (ext2 ?? 'bin').replace(/[^a-z0-9]/gi, '').toLowerCase() || 'bin'
+        supportingPath = `vault/${selectedVaultId}/${sessionData.session.user.id}/${Date.now()}-supporting.${safeExt2}`
+        const { error: uploadErr2 } = await client.storage
+          .from('proof-of-death')
+          .upload(supportingPath, supportingFile, { upsert: true })
+        if (uploadErr2) throw uploadErr2
+      }
+
       const { data: upserted, error: upsertErr } = await client.from('vault_verification_requests').upsert(
         {
           vault_id: selectedVaultId,
           heir_user_id: sessionData.session.user.id,
           status: 'pending',
           proof_of_death_path: path,
+          supporting_document_path: supportingPath,
           reject_reason: null,
           updated_at: new Date().toISOString(),
         } as any,
@@ -294,6 +307,7 @@ export function HeirHandover() {
 
       setToast('Submitted for review')
       setProofFile(null)
+      setSupportingFile(null)
 
       const { data: verRow } = await client
         .from('vault_verification_requests')
@@ -539,17 +553,49 @@ export function HeirHandover() {
               Approved. Continue below to unlock your heir key and decrypt.
             </div>
           ) : (
-            <div style={{ marginTop: 12, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-              <input
-                type="file"
-                onChange={(e: any) => setProofFile(e?.target?.files?.[0] ?? null)}
-                accept=".pdf,.png,.jpg,.jpeg,.webp,.heic"
-              />
-              <button type="button" className="primary" onClick={() => void submitProof()} disabled={isSubmittingProof}>
-                {isSubmittingProof ? 'Submitting…' : 'Submit proof'}
-              </button>
-              <div className="muted" style={{ fontSize: 12 }}>
-                PDF or image. Uploaded to a private bucket.
+            <div style={{ marginTop: 12 }}>
+              <div className="muted" style={{ fontSize: 12, lineHeight: 1.6 }}>
+                <div style={{ fontSize: 13, fontWeight: 650, letterSpacing: -0.1, color: 'var(--text)' }}>
+                  What to upload
+                </div>
+                <div style={{ marginTop: 6 }}>
+                  <strong>Required:</strong> a clear, high-resolution photo or scan of the official Death Certificate.
+                </div>
+                <div style={{ marginTop: 6 }}>
+                  <strong>Optional:</strong> a supporting document (e.g., Will excerpt or Grant of Probate) if requested during
+                  review for higher-value vaults.
+                </div>
+                <div style={{ marginTop: 6 }}>
+                  <strong>Not accepted:</strong> obituaries or funeral director statements are commonly rejected by major providers.
+                </div>
+              </div>
+
+              <div style={{ marginTop: 10, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div className="muted" style={{ fontSize: 12 }}>
+                      Required
+                    </div>
+                    <input
+                      type="file"
+                      onChange={(e: any) => setProofFile(e?.target?.files?.[0] ?? null)}
+                      accept=".pdf,.png,.jpg,.jpeg,.webp,.heic"
+                    />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div className="muted" style={{ fontSize: 12 }}>
+                      Optional
+                    </div>
+                    <input
+                      type="file"
+                      onChange={(e: any) => setSupportingFile(e?.target?.files?.[0] ?? null)}
+                      accept=".pdf,.png,.jpg,.jpeg,.webp,.heic"
+                    />
+                  </div>
+                </div>
+                <button type="button" className="primary" onClick={() => void submitProof()} disabled={isSubmittingProof}>
+                  {isSubmittingProof ? 'Submitting…' : 'Submit for review'}
+                </button>
               </div>
             </div>
           )}

@@ -6,6 +6,8 @@ create table if not exists public.vault_verification_requests (
   heir_user_id uuid not null references auth.users(id) on delete cascade,
   status text not null default 'pending',
   proof_of_death_path text null,
+  supporting_document_path text null,
+  approve_reason text null,
   reject_reason text null,
   decided_by uuid null references auth.users(id) on delete set null,
   decided_at timestamptz null,
@@ -13,6 +15,21 @@ create table if not exists public.vault_verification_requests (
   updated_at timestamptz not null default now(),
   unique (vault_id, heir_user_id)
 );
+
+alter table public.vault_verification_requests
+  add column if not exists supporting_document_path text null;
+alter table public.vault_verification_requests
+  add column if not exists approve_reason text null;
+alter table public.vault_verification_requests
+  add column if not exists reject_reason text null;
+alter table public.vault_verification_requests
+  add column if not exists decided_by uuid null;
+alter table public.vault_verification_requests
+  add column if not exists decided_at timestamptz null;
+alter table public.vault_verification_requests
+  add column if not exists created_at timestamptz not null default now();
+alter table public.vault_verification_requests
+  add column if not exists updated_at timestamptz not null default now();
 
 alter table public.vault_verification_requests enable row level security;
 
@@ -62,6 +79,7 @@ to authenticated
 using (public.is_admin())
 with check (public.is_admin());
 
+drop function if exists public.admin_pending_verifications();
 create or replace function public.admin_pending_verifications()
 returns table (
   request_id uuid,
@@ -72,6 +90,7 @@ returns table (
   heir_email text,
   status text,
   proof_of_death_path text,
+  supporting_document_path text,
   created_at timestamptz
 )
 language sql
@@ -88,6 +107,7 @@ as $$
     hu.email as heir_email,
     r.status,
     r.proof_of_death_path,
+    r.supporting_document_path,
     r.created_at
   from public.vault_verification_requests r
   join public.vaults v on v.id = r.vault_id
@@ -114,6 +134,7 @@ begin
 
   update public.vault_verification_requests
   set status = 'approved',
+      approve_reason = null,
       reject_reason = null,
       decided_by = auth.uid(),
       decided_at = now(),
@@ -124,6 +145,31 @@ $$;
 
 revoke all on function public.admin_approve_verification_request(uuid) from public;
 grant execute on function public.admin_approve_verification_request(uuid) to authenticated;
+
+create or replace function public.admin_approve_verification_request(request_id uuid, reason text)
+returns void
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+begin
+  if not public.is_admin() then
+    raise exception 'Not authorized';
+  end if;
+
+  update public.vault_verification_requests
+  set status = 'approved',
+      approve_reason = nullif(reason, ''),
+      reject_reason = null,
+      decided_by = auth.uid(),
+      decided_at = now(),
+      updated_at = now()
+  where id = request_id;
+end;
+$$;
+
+revoke all on function public.admin_approve_verification_request(uuid, text) from public;
+grant execute on function public.admin_approve_verification_request(uuid, text) to authenticated;
 
 create or replace function public.admin_reject_verification_request(request_id uuid, reason text)
 returns void
@@ -148,4 +194,3 @@ $$;
 
 revoke all on function public.admin_reject_verification_request(uuid, text) from public;
 grant execute on function public.admin_reject_verification_request(uuid, text) to authenticated;
-

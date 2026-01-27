@@ -11,6 +11,7 @@ type Row = {
   heir_email: string
   status: string
   proof_of_death_path: string
+  supporting_document_path: string | null
   created_at: string
 }
 
@@ -22,6 +23,8 @@ export function AdminPendingVerifications() {
   const [isLoading, setIsLoading] = useState(true)
   const [rejectingRow, setRejectingRow] = useState<Row | null>(null)
   const [rejectReason, setRejectReason] = useState('')
+  const [approvingRow, setApprovingRow] = useState<Row | null>(null)
+  const [approveNote, setApproveNote] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
 
@@ -86,12 +89,20 @@ export function AdminPendingVerifications() {
     if (data?.signedUrl) window.open(data.signedUrl, '_blank', 'noopener,noreferrer')
   }
 
-  const handleApprove = async (row: Row) => {
+  const openApprove = (row: Row) => {
+    setApprovingRow(row)
+    setApproveNote('')
+    setError(null)
+  }
+
+  const submitApprove = async () => {
+    if (!approvingRow) return
     setIsSubmitting(true)
     setError(null)
     const client = supabase!
     const { error: rpcError } = await client.rpc('admin_approve_verification_request', {
-      request_id: row.request_id,
+      request_id: approvingRow.request_id,
+      reason: approveNote.trim(),
     })
     setIsSubmitting(false)
 
@@ -102,6 +113,8 @@ export function AdminPendingVerifications() {
 
     setRejectingRow(null)
     setRejectReason('')
+    setApprovingRow(null)
+    setApproveNote('')
     setToast('Approved & recorded')
     await refresh()
   }
@@ -221,6 +234,46 @@ export function AdminPendingVerifications() {
           </div>
         </div>
       ) : null}
+      {approvingRow ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="modalOverlay"
+          onMouseDown={() => {
+            if (isSubmitting) return
+            setApprovingRow(null)
+            setApproveNote('')
+          }}
+        >
+          <div className="modalCard" onMouseDown={(e) => e.stopPropagation()}>
+            <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: -0.2 }}>Approve Verification</div>
+            <div className="muted" style={{ fontSize: 13, marginTop: 8, marginBottom: 10 }}>
+              {approvingRow.heir_email} • {approvingRow.owner_email}
+            </div>
+            <textarea
+              value={approveNote}
+              onChange={(e: any) => setApproveNote(e.target.value)}
+              rows={3}
+              placeholder="Approval note (optional, e.g., Death certificate is clear and matches owner details)"
+            />
+            <div className="modalActions">
+              <button
+                type="button"
+                onClick={() => {
+                  setApprovingRow(null)
+                  setApproveNote('')
+                }}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </button>
+              <button type="button" className="primary" onClick={() => void submitApprove()} disabled={isSubmitting}>
+                Approve
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <div className="card" style={{ padding: 8 }}>
         <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
           <thead>
@@ -252,13 +305,20 @@ export function AdminPendingVerifications() {
                   </span>
                 </td>
                 <td style={{ padding: 10, borderBottom: '1px solid rgba(31,41,55,0.08)' }}>
-                  <button type="button" onClick={() => void openProof(r.proof_of_death_path)} disabled={isSubmitting}>
-                    View Proof of Death
-                  </button>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <button type="button" onClick={() => void openProof(r.proof_of_death_path)} disabled={isSubmitting}>
+                      Death Certificate
+                    </button>
+                    {r.supporting_document_path ? (
+                      <button type="button" onClick={() => void openProof(r.supporting_document_path!)} disabled={isSubmitting}>
+                        Supporting Doc
+                      </button>
+                    ) : null}
+                  </div>
                 </td>
                 <td style={{ padding: 10, borderBottom: '1px solid rgba(31,41,55,0.08)' }}>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <button type="button" className="primary" onClick={() => void handleApprove(r)} disabled={isSubmitting}>
+                    <button type="button" className="primary" onClick={() => openApprove(r)} disabled={isSubmitting}>
                       Approve
                     </button>
                     <button type="button" onClick={() => openReject(r)} disabled={isSubmitting}>
