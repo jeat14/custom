@@ -398,18 +398,34 @@ export function VaultAssetEntry() {
     capture('checkout_started', { distinct_id: sessionData.session.user.id })
     setIsStartingCheckout(true)
     try {
-      const { data, error: fnError } = await client.functions.invoke('stripe-checkout', {
-        headers: { Authorization: `Bearer ${sessionData.session.access_token}` },
-        body: {
-          success_url: `${window.location.origin}/vault?checkout=success`,
-          cancel_url: `${window.location.origin}/vault?checkout=cancel`,
-        },
-      })
-      if (fnError) {
-        setError(fnError.message)
+      const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL as string | undefined
+      const supabaseAnonKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY as string | undefined
+      if (!supabaseUrl || !supabaseAnonKey) {
+        setError('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY')
         return
       }
-      const url = (data as any)?.url as string | undefined
+
+      const res = await fetch(`${supabaseUrl.replace(/\/$/, '')}/functions/v1/stripe-checkout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: supabaseAnonKey,
+          Authorization: `Bearer ${sessionData.session.access_token}`,
+        },
+        body: JSON.stringify({
+          success_url: `${window.location.origin}/vault?checkout=success`,
+          cancel_url: `${window.location.origin}/vault?checkout=cancel`,
+        }),
+      })
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => '')
+        setError(text ? `Checkout failed (${res.status}): ${text}` : `Checkout failed (${res.status})`)
+        return
+      }
+
+      const data = (await res.json().catch(() => null)) as null | { url?: string }
+      const url = data?.url
       if (!url) {
         setError('Missing checkout url')
         return
