@@ -28,6 +28,18 @@ type VaultRow = {
   vault_ciphertext: VaultCiphertext
 }
 
+type HeirVaultRow = {
+  vault_id: string
+}
+
+type VerificationRow = {
+  id: string
+  status: string
+  reject_reason: string | null
+  proof_of_death_path: string | null
+  updated_at: string
+}
+
 type KeyMaterialRow = {
   user_id: string
   heir_ecdh_public_jwk: JsonWebKey
@@ -51,11 +63,14 @@ function decodeShareBBytes(bytes: Uint8Array) {
 export function HeirHandover() {
   if (supabaseMissingEnv) return <div style={{ padding: 24 }}>{supabaseMissingEnv}</div>
 
-  const [vaults, setVaults] = useState<VaultRow[]>([])
+  const [vaults, setVaults] = useState<{ id: string }[]>([])
   const [selectedVaultId, setSelectedVaultId] = useState<string>('')
   const [vaultCiphertext, setVaultCiphertext] = useState<VaultCiphertext | null>(null)
   const [shareA, setShareA] = useState<Uint8Array | null>(null)
   const [shareBPackage, setShareBPackage] = useState<ShareBPackage | null>(null)
+  const [verification, setVerification] = useState<VerificationRow | null>(null)
+  const [proofFile, setProofFile] = useState<File | null>(null)
+  const [isSubmittingProof, setIsSubmittingProof] = useState(false)
 
   const [keyMaterial, setKeyMaterial] = useState<KeyMaterialRow | null>(null)
   const [heirPassword, setHeirPassword] = useState('')
@@ -107,10 +122,10 @@ export function HeirHandover() {
       }
       setKeyMaterial((keyRows ?? null) as any)
 
-      const { data: vaultRows, error: vaultErr } = await client
-        .from('vaults')
-        .select('id,vault_ciphertext')
-        .order('created_at', { ascending: false })
+      const { data: heirRows, error: vaultErr } = await client
+        .from('vault_heirs')
+        .select('vault_id')
+        .eq('heir_user_id', sessionData.session.user.id)
 
       if (isCancelled) return
 
@@ -125,7 +140,7 @@ export function HeirHandover() {
         return
       }
 
-      const list = (vaultRows ?? []) as any as VaultRow[]
+      const list = ((heirRows ?? []) as any as HeirVaultRow[]).map((r) => ({ id: r.vault_id }))
       setVaults(list)
       if (list.length === 1) setSelectedVaultId(list[0].id)
       setIsLoading(false)
@@ -151,6 +166,7 @@ export function HeirHandover() {
       setDecryptedPayload(null)
       setIsUnlocked(false)
       setHeirPrivKey(null)
+      setVerification(null)
 
       const client = supabase!
       const { data: sessionData } = await client.auth.getSession()
@@ -159,9 +175,30 @@ export function HeirHandover() {
         setIsWorking(false)
         return
       }
+
+      const { data: verRow, error: verErr } = await client
+        .from('vault_verification_requests')
+        .select('id,status,reject_reason,proof_of_death_path,updated_at')
+        .eq('vault_id', selectedVaultId)
+        .eq('heir_user_id', sessionData.session.user.id)
+        .maybeSingle()
+
+      if (isCancelled) return
+
+      if (verErr) {
+        setError(verErr.message)
+        setIsWorking(false)
+        return
+      }
+      setVerification((verRow ?? null) as any)
+      if ((verRow as any)?.status !== 'approved') {
+        setIsWorking(false)
+        return
+      }
       const { data: v, error: vErr } = await client
         .from('vaults')
         .select('id,vault_ciphertext')
+        .eq('id', selectedVaultId)
         .eq('id', selectedVaultId)
         .single()
 
@@ -213,6 +250,65 @@ export function HeirHandover() {
       isCancelled = true
     }
   }, [selectedVaultId])
+
+  const submitProof = async () => {
+    setError(null)
+    setNotice(null)
+    if (!selectedVaultId) {
+      setNotice('Select a vault')
+      return
+    }
+    if (!proofFile) {
+      setNotice('Choose a proof document file')
+      return
+    }
+
+    setIsSubmittingProof(true)
+    try {
+      const client = supabase!
+      const { data: sessionData } = await client.auth.getSession()
+      if (!sessionData.session) {
+        setNotice('Sign in required')
+        return
+      }
+
+      const ext = proofFile.name.includes('.') ? proofFile.name.split('.').pop() : 'bin'
+      const safeExt = (ext ?? 'bin').replace(/[^a-z0-9]/gi, '').toLowerCase() || 'bin'
+      const path = `vault/${selectedVaultId}/${sessionData.session.user.id}/${Date.now()}.${safeExt}`
+
+      const { error: uploadErr } = await client.storage.from('proof-of-death').upload(path, proofFile, { upsert: true })
+      if (uploadErr) throw uploadErr
+
+      const { data: upserted, error: upsertErr } = await client.from('vault_verification_requests').upsert(
+        {
+          vault_id: selectedVaultId,
+          heir_user_id: sessionData.session.user.id,
+          status: 'pending',
+          proof_of_death_path: path,
+          reject_reason: null,
+          updated_at: new Date().toISOString(),
+        } as any,
+        { onConflict: 'vault_id,heir_user_id' }
+      )
+      if (upsertErr) throw upsertErr
+
+      setToast('Submitted for review')
+      setProofFile(null)
+
+      const { data: verRow } = await client
+        .from('vault_verification_requests')
+        .select('id,status,reject_reason,proof_of_death_path,updated_at')
+        .eq('vault_id', selectedVaultId)
+        .eq('heir_user_id', sessionData.session.user.id)
+        .maybeSingle()
+      setVerification((verRow ?? null) as any)
+      setNotice('Verification pending. You will receive an update after review.')
+    } catch (e: any) {
+      setError(e?.message ?? 'Proof submission failed')
+    } finally {
+      setIsSubmittingProof(false)
+    }
+  }
 
   const setupKeyMaterial = async () => {
     setError(null)
@@ -388,7 +484,7 @@ export function HeirHandover() {
       <div className="card" style={{ padding: 18, marginBottom: 16 }}>
         <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: -0.1 }}>Step 1 — Select a released vault</div>
         <div className="muted" style={{ marginTop: 6, fontSize: 12 }}>
-          You will only see vaults you are authorized to access by RLS.
+          You will only see vaults where you are listed as an heir.
         </div>
 
         <div style={{ marginTop: 12 }}>
@@ -413,9 +509,56 @@ export function HeirHandover() {
         ) : null}
       </div>
 
+      {selectedVaultId ? (
+        <div className="card" style={{ padding: 18, marginBottom: 16 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: -0.1 }}>Step 2 — Duty-of-care verification</div>
+          <div className="muted" style={{ marginTop: 6, fontSize: 12 }}>
+            To access a released vault, submit proof for review. Once approved, you can decrypt locally in your browser.
+          </div>
+
+          <div style={{ marginTop: 12 }}>
+            <div className="pill" style={{ fontSize: 12, display: 'inline-flex' }}>
+              {verification?.status === 'approved'
+                ? 'Approved'
+                : verification?.status === 'pending'
+                  ? 'Pending review'
+                  : verification?.status === 'rejected'
+                    ? 'Rejected'
+                    : 'Not submitted'}
+            </div>
+          </div>
+
+          {verification?.status === 'rejected' && verification.reject_reason ? (
+            <div className="error" style={{ marginTop: 10 }}>
+              {verification.reject_reason}
+            </div>
+          ) : null}
+
+          {verification?.status === 'approved' ? (
+            <div className="muted" style={{ marginTop: 10, fontSize: 12 }}>
+              Approved. Continue below to unlock your heir key and decrypt.
+            </div>
+          ) : (
+            <div style={{ marginTop: 12, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <input
+                type="file"
+                onChange={(e: any) => setProofFile(e?.target?.files?.[0] ?? null)}
+                accept=".pdf,.png,.jpg,.jpeg,.webp,.heic"
+              />
+              <button type="button" className="primary" onClick={() => void submitProof()} disabled={isSubmittingProof}>
+                {isSubmittingProof ? 'Submitting…' : 'Submit proof'}
+              </button>
+              <div className="muted" style={{ fontSize: 12 }}>
+                PDF or image. Uploaded to a private bucket.
+              </div>
+            </div>
+          )}
+        </div>
+      ) : null}
+
       {!keyMaterial ? (
         <div className="card" style={{ padding: 18, marginBottom: 16 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: -0.1 }}>Step 2 — Create your heir key</div>
+          <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: -0.1 }}>Step 3 — Create your heir key</div>
           <div className="muted" style={{ marginTop: 6, fontSize: 12 }}>
             This password protects your private decryption key. Evernest cannot reset it.
           </div>
@@ -434,10 +577,16 @@ export function HeirHandover() {
         </div>
       ) : (
         <div className="card" style={{ padding: 18, marginBottom: 16 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: -0.1 }}>Step 2 — Unlock to decrypt</div>
+          <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: -0.1 }}>Step 3 — Unlock to decrypt</div>
           <div className="muted" style={{ marginTop: 6, fontSize: 12 }}>
             Your heir key is stored encrypted. Unlocking happens locally in your browser.
           </div>
+
+          {verification?.status !== 'approved' ? (
+            <div className="muted" style={{ marginTop: 10, fontSize: 12 }}>
+              Verification is required before released vault data becomes accessible.
+            </div>
+          ) : null}
 
           <div style={{ marginTop: 12, display: 'flex', gap: 10, alignItems: 'center' }}>
             <input

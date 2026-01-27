@@ -52,6 +52,27 @@ $$;
 revoke all on function public.is_vault_heir(uuid) from public;
 grant execute on function public.is_vault_heir(uuid) to authenticated;
 
+create or replace function public.is_vault_verified_heir(vault_id uuid)
+returns boolean
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+begin
+  if to_regclass('public.vault_verification_requests') is null then
+    return false;
+  end if;
+  return exists (
+    select 1
+zzcs      and r.status = 'approved'
+  );
+end;
+$$;
+
+revoke all on function public.is_vault_verified_heir(uuid) from public;
+grant execute on function public.is_vault_verified_heir(uuid) to authenticated;
+
 do $$
 declare
   r record;
@@ -80,7 +101,7 @@ on public.vaults
 for select
 using (
   public.is_vault_released(id)
-  and public.is_vault_heir(id)
+  and public.is_vault_verified_heir(id)
 );
 
 do $$
@@ -195,7 +216,7 @@ begin
     for select
     using (
       public.is_vault_released(vault_id)
-      and public.is_vault_heir(vault_id)
+      and public.is_vault_verified_heir(vault_id)
     )
   $sql$;
 end
@@ -234,4 +255,3 @@ begin
   $sql$;
 end
 $$;
-
