@@ -410,7 +410,8 @@ export function VaultAssetEntry() {
         headers: {
           'Content-Type': 'application/json',
           apikey: supabaseAnonKey,
-          Authorization: `Bearer ${sessionData.session.access_token}`,
+          Authorization: `Bearer ${supabaseAnonKey}`,
+          'x-user-jwt': sessionData.session.access_token,
         },
         body: JSON.stringify({
           success_url: `${window.location.origin}/vault?checkout=success`,

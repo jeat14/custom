@@ -3,10 +3,22 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4'
 
 type Json = Record<string, unknown>
 
+function corsHeaders(req?: Request): Record<string, string> {
+  const requested = req?.headers.get('access-control-request-headers') ?? ''
+  const allowHeaders =
+    requested.trim() ||
+    'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-version, x-user-jwt'
+  return {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': allowHeaders,
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  }
+}
+
 function jsonResponse(status: number, body: Json) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...corsHeaders() },
   })
 }
 
@@ -17,10 +29,15 @@ function encodeForm(data: Record<string, string>) {
 }
 
 serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: corsHeaders(req) })
+  }
   if (req.method !== 'POST') return jsonResponse(405, { error: 'Method not allowed' })
 
+  const explicitUserJwt = (req.headers.get('x-user-jwt') ?? '').trim()
   const authHeader = req.headers.get('authorization') ?? ''
-  const token = authHeader.startsWith('Bearer ') ? authHeader.slice('Bearer '.length) : ''
+  const bearer = authHeader.startsWith('Bearer ') ? authHeader.slice('Bearer '.length) : ''
+  const token = explicitUserJwt || bearer
   if (!token) return jsonResponse(401, { error: 'Unauthorized' })
 
   const url = Deno.env.get('SUPABASE_URL')
@@ -81,4 +98,3 @@ serve(async (req: Request) => {
 
   return jsonResponse(200, { url: checkoutUrl })
 })
-
