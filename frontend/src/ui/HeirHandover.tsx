@@ -153,6 +153,12 @@ export function HeirHandover() {
       setHeirPrivKey(null)
 
       const client = supabase!
+      const { data: sessionData } = await client.auth.getSession()
+      if (!sessionData.session) {
+        setNotice('Sign in required')
+        setIsWorking(false)
+        return
+      }
       const { data: v, error: vErr } = await client
         .from('vaults')
         .select('id,vault_ciphertext')
@@ -187,6 +193,7 @@ export function HeirHandover() {
         .from('vault_heirs')
         .select('share_b_package')
         .eq('vault_id', selectedVaultId)
+        .eq('heir_user_id', sessionData.session.user.id)
         .maybeSingle()
 
       if (isCancelled) return
