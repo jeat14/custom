@@ -13,4 +13,7 @@ frontend/dist/
 *.log
 *.tsbuildinfo
 
+zap-report.html
+zap*.yaml
+
 .supabase/

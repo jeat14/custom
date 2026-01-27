@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://alwaysnest.co.uk/sitemap.xml
+
