@@ -1,13 +1,24 @@
-import { Link, Outlet, useNavigate } from 'react-router-dom'
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { useEffect } from 'react'
 import { useVaultCheckInOncePerSession } from '../hooks/useVaultCheckInOncePerSession'
 import { supabase } from '../supabaseClient'
 import { useSupabaseSession } from '../hooks/useSupabaseSession'
 import { FeedbackWidget } from './FeedbackWidget'
+import { capture } from '../analytics'
 
 export function AppLayout() {
   useVaultCheckInOncePerSession()
   const { session } = useSupabaseSession()
   const navigate = useNavigate()
+  const location = useLocation()
+
+  useEffect(() => {
+    capture('$pageview', {
+      path: location.pathname,
+      search: location.search,
+      user_id: session?.user?.id ?? null,
+    })
+  }, [location.pathname, location.search, session?.user?.id])
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
