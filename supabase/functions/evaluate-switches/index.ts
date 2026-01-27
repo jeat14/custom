@@ -54,9 +54,14 @@ function jsonResponse(status: number, body: Json) {
 serve(async (req: Request) => {
   if (req.method !== 'POST') return jsonResponse(405, { error: 'Method not allowed' })
 
-  const cronToken = Deno.env.get('EVALUATE_SWITCHES_CRON_TOKEN')
-  const authHeader = req.headers.get('authorization') ?? ''
-  if (!cronToken || authHeader !== `Bearer ${cronToken}`) {
+  const cronToken = (Deno.env.get('EVALUATE_SWITCHES_CRON_TOKEN') ?? '').trim()
+  const authHeader = (req.headers.get('authorization') ?? '').trim()
+  const xCronToken = (req.headers.get('x-cron-token') ?? req.headers.get('x-evernest-cron-token') ?? '').trim()
+
+  const bearer = authHeader.startsWith('Bearer ') ? authHeader.slice('Bearer '.length).trim() : ''
+  const authorized = (!!cronToken && bearer === cronToken) || (!!cronToken && xCronToken === cronToken)
+
+  if (!authorized) {
     return jsonResponse(401, { error: 'Unauthorized' })
   }
 
@@ -326,9 +331,8 @@ ${expiresAt ? `<p>Deadline: <strong>${escapeHtml(expiresAt)}</strong></p>` : ''}
     return jsonResponse(500, { ok: false, error: message })
   } finally {
     const finishedAt = new Date()
-    await supabase
-      .from('system_job_runs')
-      .insert({
+    try {
+      await supabase.from('system_job_runs').insert({
         job_name: 'daily_evaluate_deadman_switches',
         ok,
         started_at: startedAt.toISOString(),
@@ -342,6 +346,7 @@ ${expiresAt ? `<p>Deadline: <strong>${escapeHtml(expiresAt)}</strong></p>` : ''}
           status: responseStatus,
         },
       })
-      .catch(() => {})
+    } catch {
+    }
   }
 })
