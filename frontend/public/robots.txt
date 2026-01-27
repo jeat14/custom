@@ -1,5 +1,8 @@
 User-agent: *
 Allow: /
+Disallow: /admin/
+Disallow: /vault
+Disallow: /heir
+Disallow: /login
 
 Sitemap: https://alwaysnest.co.uk/sitemap.xml
-
