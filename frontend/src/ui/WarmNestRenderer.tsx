@@ -75,6 +75,26 @@ function IconHome(props: { size?: number }) {
   )
 }
 
+function IconLock(props: { size?: number }) {
+  const size = props.size ?? 18
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <path
+        d="M7 11V8a5 5 0 0110 0v3"
+        stroke="var(--accent)"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+      <path
+        d="M6 11h12v9a2 2 0 01-2 2H8a2 2 0 01-2-2v-9z"
+        stroke="var(--accent)"
+        strokeWidth="1.6"
+      />
+      <path d="M12 14v4" stroke="var(--accent)" strokeWidth="1.2" opacity="0.35" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 function AutoTextarea(props: { value: string }) {
   const ref = useRef<HTMLTextAreaElement | null>(null)
   useEffect(() => {
@@ -164,7 +184,15 @@ export function WarmNestRenderer(props: { payload: VaultPayloadV1; title?: strin
               const isNote = item.kind === 'note' || item.label.toLowerCase().includes('letter')
               return (
                 <div key={item.id} className="vaultItemRow">
-                  <input value={item.label} readOnly />
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <span
+                      title="Encrypted on your device. Even Evernest cannot see this."
+                      style={{ display: 'inline-flex', opacity: 0.9 }}
+                    >
+                      <IconLock size={16} />
+                    </span>
+                    <input value={item.label} readOnly />
+                  </div>
                   {isNote ? <AutoTextarea value={item.value} /> : <input value={item.value} readOnly />}
                 </div>
               )

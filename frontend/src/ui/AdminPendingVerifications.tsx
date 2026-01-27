@@ -245,6 +245,7 @@ export function AdminPendingVerifications() {
               Pending Verifications
             </span>
             <Link to="/admin/system-health">System Health</Link>
+            <Link to="/support">Support</Link>
             <button type="button" onClick={() => void refresh()} disabled={isSubmitting}>
               Refresh
             </button>
@@ -385,7 +386,7 @@ export function AdminPendingVerifications() {
               </div>
             ) : (
               <>
-                <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div className="docSideBySide" style={{ marginTop: 12, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                   <div style={{ border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
                     <div
                       style={{

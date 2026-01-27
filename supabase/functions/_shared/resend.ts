@@ -2,6 +2,8 @@ type SendParams = {
   to: string
   subject: string
   html: string
+  text?: string
+  replyTo?: string
 }
 
 type SendResult =
@@ -12,6 +14,7 @@ type SendResult =
 export async function sendResendEmail(params: SendParams): Promise<SendResult> {
   const apiKey = Deno.env.get('RESEND_API_KEY')?.trim() ?? ''
   const from = Deno.env.get('RESEND_FROM_EMAIL')?.trim() ?? ''
+  const replyTo = (params.replyTo ?? Deno.env.get('RESEND_REPLY_TO_EMAIL')?.trim() ?? '').trim()
 
   const missing: string[] = []
   if (!apiKey) missing.push('RESEND_API_KEY')
@@ -29,6 +32,8 @@ export async function sendResendEmail(params: SendParams): Promise<SendResult> {
       to: params.to,
       subject: params.subject,
       html: params.html,
+      ...(params.text ? { text: params.text } : {}),
+      ...(replyTo ? { reply_to: replyTo } : {}),
     }),
   })
 
@@ -39,4 +44,3 @@ export async function sendResendEmail(params: SendParams): Promise<SendResult> {
 
   return { ok: true }
 }
-

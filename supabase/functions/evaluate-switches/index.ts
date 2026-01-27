@@ -9,6 +9,41 @@ type CandidateRow = {
   owner_id: string
 }
 
+function escapeHtml(text: string) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
+function linkHtml(href: string, label: string) {
+  const safeHref = escapeHtml(href)
+  const safeLabel = escapeHtml(label)
+  return `<a href="${safeHref}">${safeLabel}</a>`
+}
+
+function supportUrl(appUrl: string) {
+  if (!appUrl) return ''
+  return `${appUrl.replace(/\/$/, '')}/support`
+}
+
+function emailShell(params: { title: string; bodyHtml: string; appUrl: string }) {
+  const support = supportUrl(params.appUrl)
+  const footer = support
+    ? `<hr /><p style="color:rgba(31,41,55,0.75);font-size:13px;line-height:1.6">Need help? ${linkHtml(
+        support,
+        'Contact Support'
+      )}</p>`
+    : `<hr /><p style="color:rgba(31,41,55,0.75);font-size:13px;line-height:1.6">Need help? Reply to this email.</p>`
+  return `<div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;line-height:1.6">
+<h2 style="margin:0 0 12px 0">${escapeHtml(params.title)}</h2>
+${params.bodyHtml}
+${footer}
+</div>`
+}
+
 function jsonResponse(status: number, body: Json) {
   return new Response(JSON.stringify(body), {
     status,
@@ -60,11 +95,17 @@ serve(async (req: Request) => {
     }
 
     const email = data.user.email
-    const subject = 'We miss you — check in to Evernest'
-    const html = `<p>Just a quick note from Evernest — log in to see what’s new.</p>${
-      appUrl ? `<p><a href="${appUrl}">Sign in</a></p>` : ''
-    }`
-    const result = await sendResendEmail({ to: email, subject, html })
+    const signInUrl = appUrl ? `${appUrl.replace(/\/$/, '')}/vault` : ''
+    const subject = 'Quick check-in reminder from Evernest'
+    const html = emailShell({
+      title: 'Quick check-in reminder',
+      bodyHtml: `<p>If you’re able, please sign in and check in. This helps keep your vault private and prevents accidental handover.</p>${
+        signInUrl ? `<p>${linkHtml(signInUrl, 'Sign in')}</p>` : ''
+      }`,
+      appUrl,
+    })
+    const text = `Quick check-in reminder.\n\nIf you’re able, please sign in and check in.\n${signInUrl ? `\nSign in: ${signInUrl}\n` : ''}`
+    const result = await sendResendEmail({ to: email, subject, html, text })
     gentleEmailResults.push({ vault_id: row.vault_id, owner_id: row.owner_id, result })
 
     if ((result as any)?.ok || (result as any)?.skipped) {
@@ -88,12 +129,20 @@ serve(async (req: Request) => {
     }
 
     const email = data.user.email
-    const subject = '[Action Required] Your Legacy Vault Handover is scheduled'
-    const html = `<p>This is an important reminder from Evernest: we haven’t received a check-in recently.</p>
-<p>If you’re okay and want to keep everything private, please sign in and check in.</p>${
-      appUrl ? `<p><a href="${appUrl}">Sign in</a></p>` : ''
+    const signInUrl = appUrl ? `${appUrl.replace(/\/$/, '')}/vault` : ''
+    const subject = 'Important: please confirm you’re OK'
+    const html = emailShell({
+      title: 'Please confirm you’re OK',
+      bodyHtml: `<p>We haven’t received a check-in within the required timeframe.</p>
+<p>If you’re OK and want to keep everything private, please sign in and check in.</p>${
+        signInUrl ? `<p>${linkHtml(signInUrl, 'Sign in & check in')}</p>` : ''
+      }`,
+      appUrl,
+    })
+    const text = `Please confirm you’re OK.\n\nWe haven’t received a check-in within the required timeframe.\n${
+      signInUrl ? `\nSign in & check in: ${signInUrl}\n` : ''
     }`
-    const result = await sendResendEmail({ to: email, subject, html })
+    const result = await sendResendEmail({ to: email, subject, html, text })
     warningEmailResults.push({ vault_id: row.vault_id, owner_id: row.owner_id, result })
 
     if ((result as any)?.ok || (result as any)?.skipped) {
@@ -125,14 +174,21 @@ serve(async (req: Request) => {
     }
 
     const cancelUrl = appUrl ? `${appUrl.replace(/\/$/, '')}/vault?cancelRelease=1` : ''
-    const subject = '[Action Required] A vault release has been initiated'
-    const html = `<p>A release request has been initiated for your Evernest vault.</p>
-<p>If this is a mistake (e.g., you’re OK and just away), you have <strong>24 hours</strong> to cancel.</p>
-${expiresAt ? `<p>Deadline: <strong>${expiresAt}</strong></p>` : ''}${
-      cancelUrl ? `<p><a href="${cancelUrl}">Cancel Release</a></p>` : ''
-    }<p>If you cannot sign in, contact Support immediately.</p>`
+    const subject = 'Release started — cancel within 24 hours if needed'
+    const html = emailShell({
+      title: 'Release started',
+      bodyHtml: `<p>A release request has been initiated for your Evernest vault.</p>
+<p>If this is a mistake, you have <strong>24 hours</strong> to cancel.</p>
+${expiresAt ? `<p>Deadline: <strong>${escapeHtml(expiresAt)}</strong></p>` : ''}${
+        cancelUrl ? `<p>${linkHtml(cancelUrl, 'Cancel release')}</p>` : ''
+      }`,
+      appUrl,
+    })
+    const text = `Release started.\n\nA release request has been initiated for your Evernest vault.\nIf this is a mistake, you have 24 hours to cancel.\n${
+      expiresAt ? `Deadline: ${expiresAt}\n` : ''
+    }${cancelUrl ? `Cancel: ${cancelUrl}\n` : ''}`
 
-    const result = await sendResendEmail({ to: data.user.email, subject, html })
+    const result = await sendResendEmail({ to: data.user.email, subject, html, text })
     pulseEmailResults.push({ vault_id: vaultId, owner_id: ownerId, result })
 
     if ((result as any)?.ok || (result as any)?.skipped) {
@@ -159,12 +215,19 @@ ${expiresAt ? `<p>Deadline: <strong>${expiresAt}</strong></p>` : ''}${
     if (vaultRow && !vaultRow.release_owner_emailed_at) {
       const { data: ownerData, error: ownerErr } = await supabase.auth.admin.getUserById(row.owner_id)
       if (!ownerErr && ownerData?.user?.email) {
-        const subject = 'Confirmation: your Evernest vault access process has started'
-        const html = `<p>We haven’t received a check-in within the required timeframe, so an access process has started.</p>
-<p>If this is a mistake and you’re able to access your account, please sign in immediately.</p>${
-          appUrl ? `<p><a href="${appUrl}">Sign in</a></p>` : ''
+        const signInUrl = appUrl ? `${appUrl.replace(/\/$/, '')}/vault` : ''
+        const subject = 'Your vault is now released'
+        const html = emailShell({
+          title: 'Your vault is now released',
+          bodyHtml: `<p>We haven’t received a check-in within the required timeframe, so your vault has moved to released status.</p>${
+            signInUrl ? `<p>${linkHtml(signInUrl, 'Sign in')}</p>` : ''
+          }`,
+          appUrl,
+        })
+        const text = `Your vault is now released.\n\nWe haven’t received a check-in within the required timeframe, so your vault has moved to released status.\n${
+          signInUrl ? `\nSign in: ${signInUrl}\n` : ''
         }`
-        entry.owner_result = await sendResendEmail({ to: ownerData.user.email, subject, html })
+        entry.owner_result = await sendResendEmail({ to: ownerData.user.email, subject, html, text })
         if ((entry.owner_result as any)?.ok || (entry.owner_result as any)?.skipped) {
           await supabase
             .from('vaults')
@@ -194,12 +257,20 @@ ${expiresAt ? `<p>Deadline: <strong>${expiresAt}</strong></p>` : ''}${
             heirResults.push({ ok: false, heir_user_id: heirUserId, error: heirErr?.message ?? 'No email' })
             continue
           }
-          const subject = 'You have a secure notification in Evernest'
-          const html = `<p>You have a secure notification waiting in your Evernest account.</p>
-<p>Please sign in to view it.</p>${
-            appUrl ? `<p><a href="${appUrl}">Sign in</a></p>` : ''
+          const heirUrl = appUrl ? `${appUrl.replace(/\/$/, '')}/heir` : ''
+          const subject = 'You have been entrusted as a digital guardian'
+          const html = emailShell({
+            title: 'You have been entrusted as a digital guardian',
+            bodyHtml: `<p>You have been designated as a digital guardian for someone’s legacy.</p>
+<p>To proceed, sign in and follow the verification steps. Access is only granted after a duty-of-care review.</p>${
+              heirUrl ? `<p>${linkHtml(heirUrl, 'Open Heir Handover')}</p>` : ''
+            }`,
+            appUrl,
+          })
+          const text = `You have been entrusted as a digital guardian.\n\nSign in and follow the verification steps. Access is only granted after a duty-of-care review.\n${
+            heirUrl ? `\nOpen: ${heirUrl}\n` : ''
           }`
-          const result = await sendResendEmail({ to: heirData.user.email, subject, html })
+          const result = await sendResendEmail({ to: heirData.user.email, subject, html, text })
           heirResults.push({ heir_user_id: heirUserId, result })
         }
 

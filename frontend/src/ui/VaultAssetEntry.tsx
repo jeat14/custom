@@ -981,7 +981,15 @@ export function VaultAssetEntry() {
               const isNote = item.kind === 'note' || item.label.toLowerCase().includes('letter')
               return (
                 <div key={item.id} className="vaultItemRow">
-                  <input value={item.label} onChange={(e: any) => updateItem(cat.key, item.id, { label: e.target.value })} />
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <span
+                      title="Encrypted on your device. Even Evernest cannot see this."
+                      style={{ display: 'inline-flex', opacity: 0.9 }}
+                    >
+                      <IconLock size={16} />
+                    </span>
+                    <input value={item.label} onChange={(e: any) => updateItem(cat.key, item.id, { label: e.target.value })} />
+                  </div>
                   {isNote ? (
                     <AutoTextarea
                       value={item.value}

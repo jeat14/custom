@@ -510,6 +510,7 @@ export function HeirHandover() {
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             <Link to="/security-audit">Security Audit</Link>
             <Link to="/vault">Vault</Link>
+            <Link to="/support">Support</Link>
           </div>
         </div>
 
@@ -743,11 +744,29 @@ export function HeirHandover() {
       )}
 
       {decryptedPayload ? (
-        <WarmNestRenderer
-          payload={decryptedPayload}
-          title="Warm Nest"
-          subtitle="A quiet, read-only view of what they left behind."
-        />
+        <>
+          <div className="card" style={{ padding: 18, marginBottom: 16 }}>
+            <div style={{ fontSize: 18, fontWeight: 750, letterSpacing: -0.2 }}>Welcome, Digital Guardian</div>
+            <div className="muted" style={{ marginTop: 8, fontSize: 13, lineHeight: 1.6 }}>
+              You’re now viewing decrypted information locally in your browser. Nothing here is sent back to Evernest.
+            </div>
+            <div style={{ marginTop: 12, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <button type="button" className="primary" onClick={() => void downloadSettlementPdf()} disabled={isDownloadingPdf}>
+                {isDownloadingPdf ? 'Preparing…' : 'Download Settlement Roadmap PDF'}
+              </button>
+              <label className="muted" style={{ fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={includeSecretsInPdf}
+                  onChange={(e: any) => setIncludeSecretsInPdf(!!e.target.checked)}
+                />
+                Include secrets in PDF
+              </label>
+              <Link to="/support">Contact Support</Link>
+            </div>
+          </div>
+          <WarmNestRenderer payload={decryptedPayload} title="Warm Nest" subtitle="A quiet, read-only view of what they left behind." />
+        </>
       ) : null}
 
       {toast ? (
