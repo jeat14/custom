@@ -2,7 +2,9 @@ type CaptureProps = Record<string, unknown>
 
 function getPosthogHost() {
   const host = (import.meta as any).env?.VITE_POSTHOG_HOST as string | undefined
-  return (host ?? 'https://app.posthog.com').replace(/\/$/, '')
+  const raw = (host ?? 'https://app.posthog.com').trim()
+  const withScheme = raw.startsWith('http://') || raw.startsWith('https://') ? raw : `https://${raw}`
+  return withScheme.replace(/\/$/, '')
 }
 
 function getPosthogKey() {
@@ -33,4 +35,3 @@ export function capture(event: string, props?: CaptureProps) {
     keepalive: true,
   }).catch(() => {})
 }
-
