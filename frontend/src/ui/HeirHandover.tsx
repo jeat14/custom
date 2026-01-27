@@ -35,8 +35,10 @@ type HeirVaultRow = {
 type VerificationRow = {
   id: string
   status: string
+  approve_reason: string | null
   reject_reason: string | null
   proof_of_death_path: string | null
+  supporting_document_path: string | null
   updated_at: string
 }
 
@@ -179,7 +181,7 @@ export function HeirHandover() {
 
       const { data: verRow, error: verErr } = await client
         .from('vault_verification_requests')
-        .select('id,status,reject_reason,proof_of_death_path,updated_at')
+        .select('id,status,approve_reason,reject_reason,proof_of_death_path,supporting_document_path,updated_at')
         .eq('vault_id', selectedVaultId)
         .eq('heir_user_id', sessionData.session.user.id)
         .maybeSingle()
@@ -199,7 +201,6 @@ export function HeirHandover() {
       const { data: v, error: vErr } = await client
         .from('vaults')
         .select('id,vault_ciphertext')
-        .eq('id', selectedVaultId)
         .eq('id', selectedVaultId)
         .single()
 
@@ -298,6 +299,7 @@ export function HeirHandover() {
           status: 'pending',
           proof_of_death_path: path,
           supporting_document_path: supportingPath,
+          approve_reason: null,
           reject_reason: null,
           updated_at: new Date().toISOString(),
         } as any,
@@ -311,7 +313,7 @@ export function HeirHandover() {
 
       const { data: verRow } = await client
         .from('vault_verification_requests')
-        .select('id,status,reject_reason,proof_of_death_path,updated_at')
+        .select('id,status,approve_reason,reject_reason,proof_of_death_path,supporting_document_path,updated_at')
         .eq('vault_id', selectedVaultId)
         .eq('heir_user_id', sessionData.session.user.id)
         .maybeSingle()
@@ -531,6 +533,30 @@ export function HeirHandover() {
           </div>
 
           <div style={{ marginTop: 12 }}>
+            <div
+              className="progressTrack"
+              style={{ height: 10, borderRadius: 999, overflow: 'hidden', background: 'rgba(31,41,55,0.10)' }}
+            >
+              <div
+                className="progressFill"
+                style={{
+                  height: '100%',
+                  width:
+                    verification?.status === 'approved'
+                      ? '100%'
+                      : verification?.status === 'pending'
+                        ? '66%'
+                        : verification?.status === 'rejected'
+                          ? '66%'
+                          : '0%',
+                }}
+              />
+            </div>
+            <div className="muted" style={{ marginTop: 8, fontSize: 12, display: 'flex', justifyContent: 'space-between' }}>
+              <span>Documents uploaded</span>
+              <span>Under review</span>
+              <span>Approved / Released</span>
+            </div>
             <div className="pill" style={{ fontSize: 12, display: 'inline-flex' }}>
               {verification?.status === 'approved'
                 ? 'Approved'
@@ -545,6 +571,15 @@ export function HeirHandover() {
           {verification?.status === 'rejected' && verification.reject_reason ? (
             <div className="error" style={{ marginTop: 10 }}>
               {verification.reject_reason}
+            </div>
+          ) : null}
+
+          {verification?.status === 'approved' && verification.approve_reason ? (
+            <div className="banner" style={{ marginTop: 10 }}>
+              <div style={{ fontSize: 13, fontWeight: 650, letterSpacing: -0.1 }}>Review note</div>
+              <div className="muted" style={{ marginTop: 4, fontSize: 12 }}>
+                {verification.approve_reason}
+              </div>
             </div>
           ) : null}
 

@@ -25,6 +25,11 @@ export function AdminPendingVerifications() {
   const [rejectReason, setRejectReason] = useState('')
   const [approvingRow, setApprovingRow] = useState<Row | null>(null)
   const [approveNote, setApproveNote] = useState('')
+  const [viewerRow, setViewerRow] = useState<Row | null>(null)
+  const [viewerDeathUrl, setViewerDeathUrl] = useState<string | null>(null)
+  const [viewerSupportingUrl, setViewerSupportingUrl] = useState<string | null>(null)
+  const [viewerError, setViewerError] = useState<string | null>(null)
+  const [viewerLoading, setViewerLoading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
 
@@ -87,6 +92,37 @@ export function AdminPendingVerifications() {
     }
 
     if (data?.signedUrl) window.open(data.signedUrl, '_blank', 'noopener,noreferrer')
+  }
+
+  const openViewer = async (row: Row) => {
+    setViewerRow(row)
+    setViewerDeathUrl(null)
+    setViewerSupportingUrl(null)
+    setViewerError(null)
+    setViewerLoading(true)
+    try {
+      const client = supabase!
+      const { data: death, error: deathErr } = await client.storage
+        .from('proof-of-death')
+        .createSignedUrl(row.proof_of_death_path, 60 * 10)
+      if (deathErr) throw deathErr
+
+      let supportingUrl: string | null = null
+      if (row.supporting_document_path) {
+        const { data: sup, error: supErr } = await client.storage
+          .from('proof-of-death')
+          .createSignedUrl(row.supporting_document_path, 60 * 10)
+        if (supErr) throw supErr
+        supportingUrl = sup?.signedUrl ?? null
+      }
+
+      setViewerDeathUrl(death?.signedUrl ?? null)
+      setViewerSupportingUrl(supportingUrl)
+    } catch (e: any) {
+      setViewerError(e?.message ?? 'Failed to load documents')
+    } finally {
+      setViewerLoading(false)
+    }
   }
 
   const openApprove = (row: Row) => {
@@ -274,6 +310,98 @@ export function AdminPendingVerifications() {
           </div>
         </div>
       ) : null}
+      {viewerRow ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="modalOverlay"
+          onMouseDown={() => {
+            if (viewerLoading) return
+            setViewerRow(null)
+            setViewerDeathUrl(null)
+            setViewerSupportingUrl(null)
+            setViewerError(null)
+          }}
+        >
+          <div className="modalCard" onMouseDown={(e) => e.stopPropagation()} style={{ maxWidth: 1200, width: '95vw' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10 }}>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: -0.2 }}>Documents</div>
+                <div className="muted" style={{ fontSize: 13, marginTop: 6 }}>
+                  {viewerRow.heir_email} • {viewerRow.owner_email}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setViewerRow(null)
+                  setViewerDeathUrl(null)
+                  setViewerSupportingUrl(null)
+                  setViewerError(null)
+                }}
+                disabled={viewerLoading}
+              >
+                Close
+              </button>
+            </div>
+
+            {viewerError ? (
+              <div className="error" style={{ marginTop: 12 }}>
+                {viewerError}
+              </div>
+            ) : null}
+
+            {viewerLoading ? (
+              <div className="muted" style={{ marginTop: 12, fontSize: 13 }}>
+                Loading documents…
+              </div>
+            ) : (
+              <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div style={{ border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+                  <div style={{ padding: 10, borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: -0.1 }}>Death Certificate</div>
+                    <button type="button" onClick={() => void openProof(viewerRow.proof_of_death_path)} style={{ padding: '6px 10px' }}>
+                      Open
+                    </button>
+                  </div>
+                  {viewerDeathUrl ? (
+                    <iframe title="Death certificate" src={viewerDeathUrl} style={{ width: '100%', height: 560, border: 0 }} />
+                  ) : (
+                    <div className="muted" style={{ padding: 12, fontSize: 13 }}>
+                      No document
+                    </div>
+                  )}
+                </div>
+                <div style={{ border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+                  <div style={{ padding: 10, borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: -0.1 }}>Supporting Doc</div>
+                    {viewerRow.supporting_document_path ? (
+                      <button
+                        type="button"
+                        onClick={() => void openProof(viewerRow.supporting_document_path!)}
+                        style={{ padding: '6px 10px' }}
+                      >
+                        Open
+                      </button>
+                    ) : (
+                      <div className="muted" style={{ fontSize: 12, padding: '6px 10px' }}>
+                        None
+                      </div>
+                    )}
+                  </div>
+                  {viewerSupportingUrl ? (
+                    <iframe title="Supporting document" src={viewerSupportingUrl} style={{ width: '100%', height: 560, border: 0 }} />
+                  ) : (
+                    <div className="muted" style={{ padding: 12, fontSize: 13 }}>
+                      No document
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
       <div className="card" style={{ padding: 8 }}>
         <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
           <thead>
@@ -303,17 +431,17 @@ export function AdminPendingVerifications() {
                   <span className="pill" style={{ fontSize: 12 }}>
                     {r.status}
                   </span>
+                  {Date.now() - new Date(r.created_at).getTime() > 48 * 60 * 60 * 1000 ? (
+                    <span className="pill" style={{ fontSize: 12, marginLeft: 8 }}>
+                      48h+
+                    </span>
+                  ) : null}
                 </td>
                 <td style={{ padding: 10, borderBottom: '1px solid rgba(31,41,55,0.08)' }}>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <button type="button" onClick={() => void openProof(r.proof_of_death_path)} disabled={isSubmitting}>
-                      Death Certificate
+                    <button type="button" onClick={() => void openViewer(r)} disabled={isSubmitting}>
+                      View side-by-side
                     </button>
-                    {r.supporting_document_path ? (
-                      <button type="button" onClick={() => void openProof(r.supporting_document_path!)} disabled={isSubmitting}>
-                        Supporting Doc
-                      </button>
-                    ) : null}
                   </div>
                 </td>
                 <td style={{ padding: 10, borderBottom: '1px solid rgba(31,41,55,0.08)' }}>
