@@ -133,7 +133,10 @@ export function AdminPendingVerifications() {
       return
     }
 
+    const { data: sessionData } = await client.auth.getSession()
+    const accessToken = sessionData.session?.access_token
     const { error: fnError } = await client.functions.invoke('admin-verification-email', {
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
       body: { request_id: rejectingRow.request_id, reason: rejectReason.trim() },
     })
     if (fnError) {

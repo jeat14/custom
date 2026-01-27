@@ -399,6 +399,7 @@ export function VaultAssetEntry() {
     setIsStartingCheckout(true)
     try {
       const { data, error: fnError } = await client.functions.invoke('stripe-checkout', {
+        headers: { Authorization: `Bearer ${sessionData.session.access_token}` },
         body: {
           success_url: `${window.location.origin}/vault?checkout=success`,
           cancel_url: `${window.location.origin}/vault?checkout=cancel`,
