@@ -52,7 +52,13 @@ function jsonResponse(status: number, body: Json) {
 }
 
 serve(async (req: Request) => {
-  if (req.method !== 'POST' && req.method !== 'GET') return jsonResponse(405, { error: 'Method not allowed' })
+  const isHead = req.method === 'HEAD'
+  const respond = (status: number, body: Json) =>
+    isHead ? new Response(null, { status, headers: { 'Content-Type': 'application/json' } }) : jsonResponse(status, body)
+
+  if (req.method !== 'POST' && req.method !== 'GET' && req.method !== 'HEAD') {
+    return respond(405, { error: 'Method not allowed' })
+  }
 
   const cronToken = (Deno.env.get('EVALUATE_SWITCHES_CRON_TOKEN') ?? '').trim()
   const authHeader = (req.headers.get('authorization') ?? '').trim()
@@ -67,13 +73,13 @@ serve(async (req: Request) => {
     (!!cronToken && queryToken === cronToken)
 
   if (!authorized) {
-    return jsonResponse(401, { error: 'Unauthorized' })
+    return respond(401, { error: 'Unauthorized' })
   }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
   if (!supabaseUrl || !serviceRoleKey) {
-    return jsonResponse(500, { error: 'Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY' })
+    return respond(500, { error: 'Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY' })
   }
 
   const supabase = createClient(supabaseUrl, serviceRoleKey, {
@@ -314,7 +320,7 @@ ${expiresAt ? `<p>Deadline: <strong>${escapeHtml(expiresAt)}</strong></p>` : ''}
     releaseEmailResults.push(entry)
   }
 
-  return jsonResponse(200, {
+  return respond(200, {
     ok: true,
     gentle_candidates: gentle.length,
     warning_candidates: warning.length,
@@ -333,7 +339,7 @@ ${expiresAt ? `<p>Deadline: <strong>${escapeHtml(expiresAt)}</strong></p>` : ''}
     ok = false
     responseStatus = 500
     message = e?.message ?? 'Failed to evaluate deadman switches'
-    return jsonResponse(500, { ok: false, error: message })
+    return respond(500, { ok: false, error: message })
   } finally {
     const finishedAt = new Date()
     try {

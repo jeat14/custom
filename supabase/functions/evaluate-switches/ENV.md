@@ -14,4 +14,4 @@ Invoke the function with either:
 or
 - X-CRON-TOKEN: <EVALUATE_SWITCHES_CRON_TOKEN>
 or (only for simple GET-based monitors)
-- GET https://<project-ref>.supabase.co/functions/v1/evaluate-switches?token=<EVALUATE_SWITCHES_CRON_TOKEN>
+- GET/HEAD https://<project-ref>.supabase.co/functions/v1/evaluate-switches?token=<EVALUATE_SWITCHES_CRON_TOKEN>
