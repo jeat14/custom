@@ -33,6 +33,82 @@ alter table public.vault_verification_requests
 
 alter table public.vault_verification_requests enable row level security;
 
+create table if not exists public.vault_verification_audit_events (
+  id uuid primary key default gen_random_uuid(),
+  request_id uuid not null references public.vault_verification_requests(id) on delete cascade,
+  actor_id uuid null references auth.users(id) on delete set null,
+  event_type text not null,
+  note text null,
+  metadata jsonb null,
+  created_at timestamptz not null default now()
+);
+
+alter table public.vault_verification_audit_events enable row level security;
+
+drop policy if exists "admin_select_verification_audit_events" on public.vault_verification_audit_events;
+create policy "admin_select_verification_audit_events"
+on public.vault_verification_audit_events
+for select
+to authenticated
+using (public.is_admin());
+
+drop policy if exists "admin_insert_verification_audit_events" on public.vault_verification_audit_events;
+create policy "admin_insert_verification_audit_events"
+on public.vault_verification_audit_events
+for insert
+to authenticated
+with check (public.is_admin());
+
+drop function if exists public.admin_log_verification_event(uuid, text, text, jsonb);
+create or replace function public.admin_log_verification_event(request_id uuid, event_type text, note text, metadata jsonb default null)
+returns void
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+begin
+  if not public.is_admin() then
+    raise exception 'Not authorized';
+  end if;
+
+  insert into public.vault_verification_audit_events (request_id, actor_id, event_type, note, metadata)
+  values (request_id, auth.uid(), event_type, nullif(note, ''), metadata);
+end;
+$$;
+
+revoke all on function public.admin_log_verification_event(uuid, text, text, jsonb) from public;
+grant execute on function public.admin_log_verification_event(uuid, text, text, jsonb) to authenticated;
+
+drop function if exists public.admin_verification_history(uuid);
+create or replace function public.admin_verification_history(request_id uuid)
+returns table (
+  event_type text,
+  note text,
+  actor_id uuid,
+  actor_email text,
+  created_at timestamptz
+)
+language sql
+stable
+security definer
+set search_path = public, auth
+as $$
+  select
+    e.event_type,
+    e.note,
+    e.actor_id,
+    u.email as actor_email,
+    e.created_at
+  from public.vault_verification_audit_events e
+  left join auth.users u on u.id = e.actor_id
+  where public.is_admin()
+    and e.request_id = request_id
+  order by e.created_at desc;
+$$;
+
+revoke all on function public.admin_verification_history(uuid) from public;
+grant execute on function public.admin_verification_history(uuid) to authenticated;
+
 drop policy if exists "heir_upsert_own_verification_request" on public.vault_verification_requests;
 create policy "heir_upsert_own_verification_request"
 on public.vault_verification_requests
@@ -140,6 +216,9 @@ begin
       decided_at = now(),
       updated_at = now()
   where id = request_id;
+
+  insert into public.vault_verification_audit_events (request_id, actor_id, event_type, note)
+  values (request_id, auth.uid(), 'approved', null);
 end;
 $$;
 
@@ -165,6 +244,9 @@ begin
       decided_at = now(),
       updated_at = now()
   where id = request_id;
+
+  insert into public.vault_verification_audit_events (request_id, actor_id, event_type, note)
+  values (request_id, auth.uid(), 'approved', nullif(reason, ''));
 end;
 $$;
 
@@ -189,6 +271,9 @@ begin
       decided_at = now(),
       updated_at = now()
   where id = request_id;
+
+  insert into public.vault_verification_audit_events (request_id, actor_id, event_type, note)
+  values (request_id, auth.uid(), 'rejected', reason);
 end;
 $$;
 

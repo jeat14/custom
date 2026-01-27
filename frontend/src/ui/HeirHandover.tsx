@@ -22,6 +22,7 @@ import {
 } from '../crypto/zk'
 import type { VaultPayloadV1 } from './WarmNestRenderer'
 import { WarmNestRenderer } from './WarmNestRenderer'
+import { generateSettlementRoadmapPdf } from '../settlementPdf'
 
 type VaultRow = {
   id: string
@@ -39,6 +40,7 @@ type VerificationRow = {
   reject_reason: string | null
   proof_of_death_path: string | null
   supporting_document_path: string | null
+  decided_at: string | null
   updated_at: string
 }
 
@@ -74,6 +76,8 @@ export function HeirHandover() {
   const [proofFile, setProofFile] = useState<File | null>(null)
   const [supportingFile, setSupportingFile] = useState<File | null>(null)
   const [isSubmittingProof, setIsSubmittingProof] = useState(false)
+  const [includeSecretsInPdf, setIncludeSecretsInPdf] = useState(false)
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false)
 
   const [keyMaterial, setKeyMaterial] = useState<KeyMaterialRow | null>(null)
   const [heirPassword, setHeirPassword] = useState('')
@@ -181,7 +185,7 @@ export function HeirHandover() {
 
       const { data: verRow, error: verErr } = await client
         .from('vault_verification_requests')
-        .select('id,status,approve_reason,reject_reason,proof_of_death_path,supporting_document_path,updated_at')
+        .select('id,status,approve_reason,reject_reason,proof_of_death_path,supporting_document_path,decided_at,updated_at')
         .eq('vault_id', selectedVaultId)
         .eq('heir_user_id', sessionData.session.user.id)
         .maybeSingle()
@@ -313,7 +317,7 @@ export function HeirHandover() {
 
       const { data: verRow } = await client
         .from('vault_verification_requests')
-        .select('id,status,approve_reason,reject_reason,proof_of_death_path,supporting_document_path,updated_at')
+        .select('id,status,approve_reason,reject_reason,proof_of_death_path,supporting_document_path,decided_at,updated_at')
         .eq('vault_id', selectedVaultId)
         .eq('heir_user_id', sessionData.session.user.id)
         .maybeSingle()
@@ -460,6 +464,35 @@ export function HeirHandover() {
     a.click()
     a.remove()
     URL.revokeObjectURL(url)
+  }
+
+  const downloadSettlementPdf = async () => {
+    setError(null)
+    setNotice(null)
+    if (!decryptedPayload || !selectedVaultId) return
+    setIsDownloadingPdf(true)
+    try {
+      const bytes = await generateSettlementRoadmapPdf({
+        vaultId: selectedVaultId,
+        payload: decryptedPayload,
+        includeSecrets: includeSecretsInPdf,
+        dutyOfCareApprovedAtIso: verification?.decided_at ?? null,
+      })
+      const safeBytes = bytes instanceof Uint8Array ? bytes.slice() : new Uint8Array(bytes as any).slice()
+      const blob = new Blob([safeBytes.buffer as ArrayBuffer], { type: 'application/pdf' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `evernest-settlement-roadmap-${selectedVaultId.slice(0, 8)}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+    } catch (e: any) {
+      setError(e?.message ?? 'PDF export failed')
+    } finally {
+      setIsDownloadingPdf(false)
+    }
   }
 
   if (isLoading) return <div style={{ padding: 24 }}>Loading…</div>
@@ -689,6 +722,17 @@ export function HeirHandover() {
             </button>
             <button type="button" onClick={() => downloadJson()} disabled={!decryptedPayload}>
               Download JSON
+            </button>
+            <label className="muted" style={{ fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+              <input
+                type="checkbox"
+                checked={includeSecretsInPdf}
+                onChange={(e: any) => setIncludeSecretsInPdf(!!e.target.checked)}
+              />
+              Include secrets in PDF
+            </label>
+            <button type="button" onClick={() => void downloadSettlementPdf()} disabled={!decryptedPayload || isDownloadingPdf}>
+              {isDownloadingPdf ? 'Preparing…' : 'Download Settlement PDF'}
             </button>
           </div>
 

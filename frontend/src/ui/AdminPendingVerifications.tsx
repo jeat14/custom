@@ -15,6 +15,14 @@ type Row = {
   created_at: string
 }
 
+type HistoryRow = {
+  event_type: string
+  note: string | null
+  actor_id: string | null
+  actor_email: string | null
+  created_at: string
+}
+
 export function AdminPendingVerifications() {
   if (supabaseMissingEnv) return <div style={{ padding: 24 }}>{supabaseMissingEnv}</div>
 
@@ -30,6 +38,8 @@ export function AdminPendingVerifications() {
   const [viewerSupportingUrl, setViewerSupportingUrl] = useState<string | null>(null)
   const [viewerError, setViewerError] = useState<string | null>(null)
   const [viewerLoading, setViewerLoading] = useState(false)
+  const [viewerHistory, setViewerHistory] = useState<HistoryRow[]>([])
+  const [viewerHistoryLoading, setViewerHistoryLoading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
 
@@ -100,6 +110,8 @@ export function AdminPendingVerifications() {
     setViewerSupportingUrl(null)
     setViewerError(null)
     setViewerLoading(true)
+    setViewerHistory([])
+    setViewerHistoryLoading(true)
     try {
       const client = supabase!
       const { data: death, error: deathErr } = await client.storage
@@ -118,10 +130,26 @@ export function AdminPendingVerifications() {
 
       setViewerDeathUrl(death?.signedUrl ?? null)
       setViewerSupportingUrl(supportingUrl)
+
+      await client.rpc('admin_log_verification_event', {
+        request_id: row.request_id,
+        event_type: 'documents_viewed',
+        note: '',
+        metadata: {
+          has_supporting_document: !!row.supporting_document_path,
+        },
+      } as any)
+
+      const { data: historyRows, error: histErr } = await client.rpc('admin_verification_history', {
+        request_id: row.request_id,
+      })
+      if (histErr) throw histErr
+      setViewerHistory((historyRows ?? []) as any)
     } catch (e: any) {
       setViewerError(e?.message ?? 'Failed to load documents')
     } finally {
       setViewerLoading(false)
+      setViewerHistoryLoading(false)
     }
   }
 
@@ -356,48 +384,101 @@ export function AdminPendingVerifications() {
                 Loading documents…
               </div>
             ) : (
-              <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <div style={{ border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
-                  <div style={{ padding: 10, borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: -0.1 }}>Death Certificate</div>
-                    <button type="button" onClick={() => void openProof(viewerRow.proof_of_death_path)} style={{ padding: '6px 10px' }}>
-                      Open
-                    </button>
-                  </div>
-                  {viewerDeathUrl ? (
-                    <iframe title="Death certificate" src={viewerDeathUrl} style={{ width: '100%', height: 560, border: 0 }} />
-                  ) : (
-                    <div className="muted" style={{ padding: 12, fontSize: 13 }}>
-                      No document
-                    </div>
-                  )}
-                </div>
-                <div style={{ border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
-                  <div style={{ padding: 10, borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: -0.1 }}>Supporting Doc</div>
-                    {viewerRow.supporting_document_path ? (
+              <>
+                <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div style={{ border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+                    <div
+                      style={{
+                        padding: 10,
+                        borderBottom: '1px solid var(--border)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: -0.1 }}>Death Certificate</div>
                       <button
                         type="button"
-                        onClick={() => void openProof(viewerRow.supporting_document_path!)}
+                        onClick={() => void openProof(viewerRow.proof_of_death_path)}
                         style={{ padding: '6px 10px' }}
                       >
                         Open
                       </button>
+                    </div>
+                    {viewerDeathUrl ? (
+                      <iframe title="Death certificate" src={viewerDeathUrl} style={{ width: '100%', height: 560, border: 0 }} />
                     ) : (
-                      <div className="muted" style={{ fontSize: 12, padding: '6px 10px' }}>
-                        None
+                      <div className="muted" style={{ padding: 12, fontSize: 13 }}>
+                        No document
                       </div>
                     )}
                   </div>
-                  {viewerSupportingUrl ? (
-                    <iframe title="Supporting document" src={viewerSupportingUrl} style={{ width: '100%', height: 560, border: 0 }} />
+                  <div style={{ border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+                    <div
+                      style={{
+                        padding: 10,
+                        borderBottom: '1px solid var(--border)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: -0.1 }}>Supporting Doc</div>
+                      {viewerRow.supporting_document_path ? (
+                        <button
+                          type="button"
+                          onClick={() => void openProof(viewerRow.supporting_document_path!)}
+                          style={{ padding: '6px 10px' }}
+                        >
+                          Open
+                        </button>
+                      ) : (
+                        <div className="muted" style={{ fontSize: 12, padding: '6px 10px' }}>
+                          None
+                        </div>
+                      )}
+                    </div>
+                    {viewerSupportingUrl ? (
+                      <iframe
+                        title="Supporting document"
+                        src={viewerSupportingUrl}
+                        style={{ width: '100%', height: 560, border: 0 }}
+                      />
+                    ) : (
+                      <div className="muted" style={{ padding: 12, fontSize: 13 }}>
+                        No document
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ marginTop: 14 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: -0.1 }}>History</div>
+                  {viewerHistoryLoading ? (
+                    <div className="muted" style={{ marginTop: 8, fontSize: 13 }}>
+                      Loading history…
+                    </div>
+                  ) : viewerHistory.length ? (
+                    <div style={{ marginTop: 8, display: 'grid', gap: 8 }}>
+                      {viewerHistory.map((h) => (
+                        <div key={`${h.created_at}-${h.event_type}`} className="banner" style={{ padding: 10 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
+                            <div style={{ fontSize: 13, fontWeight: 650, letterSpacing: -0.1 }}>{h.event_type}</div>
+                            <div className="muted" style={{ fontSize: 12 }}>
+                              {new Date(h.created_at).toLocaleString()}
+                            </div>
+                          </div>
+                          <div className="muted" style={{ marginTop: 4, fontSize: 12 }}>
+                            {(h.actor_email ?? 'Unknown admin') + (h.note ? ` — ${h.note}` : '')}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   ) : (
-                    <div className="muted" style={{ padding: 12, fontSize: 13 }}>
-                      No document
+                    <div className="muted" style={{ marginTop: 8, fontSize: 13 }}>
+                      No history yet.
                     </div>
                   )}
                 </div>
-              </div>
+              </>
             )}
           </div>
         </div>

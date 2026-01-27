@@ -331,12 +331,31 @@ export function VaultAssetEntry() {
   useEffect(() => {
     const q = new URLSearchParams(window.location.search)
     const checkout = q.get('checkout')
-    if (!checkout) return
-    if (checkout === 'success') setToast('Upgrade complete')
-    if (checkout === 'cancel') setToast('Checkout canceled')
-    q.delete('checkout')
-    const next = `${window.location.pathname}${q.toString() ? `?${q.toString()}` : ''}${window.location.hash}`
-    window.history.replaceState(null, '', next)
+    const cancelRelease = q.get('cancelRelease')
+    if (!checkout && !cancelRelease) return
+
+    const run = async () => {
+      if (checkout === 'success') setToast('Upgrade complete')
+      if (checkout === 'cancel') setToast('Checkout canceled')
+
+      if (cancelRelease) {
+        const client = supabase!
+        const { data } = await client.auth.getSession()
+        if (!data.session) {
+          setToast('Sign in to cancel release')
+        } else {
+          const { error } = await client.rpc('cancel_pending_release')
+          setToast(error ? 'Cancel failed' : 'Release canceled')
+        }
+      }
+
+      q.delete('checkout')
+      q.delete('cancelRelease')
+      const next = `${window.location.pathname}${q.toString() ? `?${q.toString()}` : ''}${window.location.hash}`
+      window.history.replaceState(null, '', next)
+    }
+
+    void run()
   }, [])
 
   useEffect(() => {

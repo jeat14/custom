@@ -35,7 +35,7 @@ serve(async (req: Request) => {
     auth: { persistSession: false, autoRefreshToken: false },
   })
 
-  const { error: evalErr } = await supabase.rpc('evaluate_deadman_switch')
+  const { error: evalErr } = await supabase.rpc('evaluate_deadman_switch_pulse')
   if (evalErr) return jsonResponse(500, { error: evalErr.message })
 
   const { data: candidates, error: candidatesErr } = await supabase.rpc('deadman_email_candidates')
@@ -101,6 +101,45 @@ serve(async (req: Request) => {
         .from('vaults')
         .update({ warning_emailed_at: new Date().toISOString() })
         .eq('id', row.vault_id)
+    }
+  }
+
+  const { data: pulseRows, error: pulseErr } = await supabase
+    .from('vaults')
+    .select('id,owner_id,pending_release_expires_at,pending_release_owner_emailed_at')
+    .eq('deadman_status', 'pending_release')
+    .is('pending_release_owner_emailed_at', null)
+
+  if (pulseErr) return jsonResponse(500, { error: pulseErr.message })
+
+  const pulseEmailResults: Array<{ vault_id: string; owner_id: string; result: unknown }> = []
+  for (const row of (pulseRows ?? []) as any[]) {
+    const vaultId = (row as any).id as string
+    const ownerId = (row as any).owner_id as string
+    const expiresAt = (row as any).pending_release_expires_at as string | null
+
+    const { data, error } = await supabase.auth.admin.getUserById(ownerId)
+    if (error || !data?.user?.email) {
+      pulseEmailResults.push({ vault_id: vaultId, owner_id: ownerId, result: { ok: false, error: error?.message ?? 'No email' } })
+      continue
+    }
+
+    const cancelUrl = appUrl ? `${appUrl.replace(/\/$/, '')}/vault?cancelRelease=1` : ''
+    const subject = '[Action Required] A vault release has been initiated'
+    const html = `<p>A release request has been initiated for your Evernest vault.</p>
+<p>If this is a mistake (e.g., you’re OK and just away), you have <strong>24 hours</strong> to cancel.</p>
+${expiresAt ? `<p>Deadline: <strong>${expiresAt}</strong></p>` : ''}${
+      cancelUrl ? `<p><a href="${cancelUrl}">Cancel Release</a></p>` : ''
+    }<p>If you cannot sign in, contact Support immediately.</p>`
+
+    const result = await sendResendEmail({ to: data.user.email, subject, html })
+    pulseEmailResults.push({ vault_id: vaultId, owner_id: ownerId, result })
+
+    if ((result as any)?.ok || (result as any)?.skipped) {
+      await supabase
+        .from('vaults')
+        .update({ pending_release_owner_emailed_at: new Date().toISOString() })
+        .eq('id', vaultId)
     }
   }
 
@@ -184,8 +223,11 @@ serve(async (req: Request) => {
     gentle_email_attempts: gentleEmailResults.length,
     warning_email_attempts: warningEmailResults.length,
     release_email_attempts: releaseEmailResults.length,
+    pulse_candidates: (pulseRows ?? []).length,
+    pulse_email_attempts: pulseEmailResults.length,
     gentle_email_results: gentleEmailResults,
     warning_email_results: warningEmailResults,
+    pulse_email_results: pulseEmailResults,
     release_email_results: releaseEmailResults,
   })
 })
