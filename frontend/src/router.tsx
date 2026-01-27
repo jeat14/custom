@@ -14,12 +14,12 @@ import { Terms } from './ui/Terms'
 import { VaultAssetEntry } from './ui/VaultAssetEntry'
 
 export const router = createBrowserRouter([
-  { path: '/login', element: <Login /> },
   {
     path: '/',
     element: <AppLayout />,
     children: [
       { index: true, element: <Landing /> },
+      { path: 'login', element: <Login /> },
       { path: 'vault', element: <RequireAuth><VaultAssetEntry /></RequireAuth> },
       { path: 'heir', element: <RequireAuth><HeirHandover /></RequireAuth> },
       { path: 'security-audit', element: <SecurityAudit /> },
