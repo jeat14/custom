@@ -52,26 +52,31 @@ function jsonResponse(status: number, body: Json) {
 }
 
 serve(async (req: Request) => {
-  if (req.method !== 'POST') return jsonResponse(405, { error: 'Method not allowed' })
+  if (req.method !== 'POST' && req.method !== 'GET') return jsonResponse(405, { error: 'Method not allowed' })
 
   const cronToken = (Deno.env.get('EVALUATE_SWITCHES_CRON_TOKEN') ?? '').trim()
   const authHeader = (req.headers.get('authorization') ?? '').trim()
   const xCronToken = (req.headers.get('x-cron-token') ?? req.headers.get('x-evernest-cron-token') ?? '').trim()
+  const url = new URL(req.url)
+  const queryToken = (url.searchParams.get('token') ?? '').trim()
 
   const bearer = authHeader.startsWith('Bearer ') ? authHeader.slice('Bearer '.length).trim() : ''
-  const authorized = (!!cronToken && bearer === cronToken) || (!!cronToken && xCronToken === cronToken)
+  const authorized =
+    (!!cronToken && bearer === cronToken) ||
+    (!!cronToken && xCronToken === cronToken) ||
+    (!!cronToken && queryToken === cronToken)
 
   if (!authorized) {
     return jsonResponse(401, { error: 'Unauthorized' })
   }
 
-  const url = Deno.env.get('SUPABASE_URL')
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-  if (!url || !serviceRoleKey) {
+  if (!supabaseUrl || !serviceRoleKey) {
     return jsonResponse(500, { error: 'Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY' })
   }
 
-  const supabase = createClient(url, serviceRoleKey, {
+  const supabase = createClient(supabaseUrl, serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   })
 
