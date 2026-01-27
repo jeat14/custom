@@ -70,137 +70,155 @@ serve(async (req: Request) => {
     auth: { persistSession: false, autoRefreshToken: false },
   })
 
-  const { error: evalErr } = await supabase.rpc('evaluate_deadman_switch_pulse')
-  if (evalErr) return jsonResponse(500, { error: evalErr.message })
+  const startedAt = new Date()
+  let ok = true
+  let message = 'ok'
+  let gentleCandidates = 0
+  let warningCandidates = 0
+  let releaseCandidates = 0
+  let pulseCandidates = 0
+  let responseStatus = 200
 
-  const { data: candidates, error: candidatesErr } = await supabase.rpc('deadman_email_candidates')
-  if (candidatesErr) return jsonResponse(500, { error: candidatesErr.message })
+  try {
+    const { error: evalErr } = await supabase.rpc('evaluate_deadman_switch_pulse')
+    if (evalErr) throw evalErr
 
-  const appUrl = Deno.env.get('APP_URL') ?? ''
+    const { data: candidates, error: candidatesErr } = await supabase.rpc('deadman_email_candidates')
+    if (candidatesErr) throw candidatesErr
 
-  const gentle = (candidates?.gentle ?? []) as CandidateRow[]
-  const warning = (candidates?.warning ?? []) as CandidateRow[]
-  const release = (candidates?.release ?? []) as CandidateRow[]
+    const appUrl = Deno.env.get('APP_URL') ?? ''
 
-  const gentleEmailResults: Array<{ vault_id: string; owner_id: string; result: unknown }> = []
-  for (const row of gentle) {
-    const { data, error } = await supabase.auth.admin.getUserById(row.owner_id)
-    if (error || !data?.user?.email) {
-      gentleEmailResults.push({
-        vault_id: row.vault_id,
-        owner_id: row.owner_id,
-        result: { ok: false, error: error?.message ?? 'No email' },
+    const gentle = (candidates?.gentle ?? []) as CandidateRow[]
+    const warning = (candidates?.warning ?? []) as CandidateRow[]
+    const release = (candidates?.release ?? []) as CandidateRow[]
+    gentleCandidates = gentle.length
+    warningCandidates = warning.length
+    releaseCandidates = release.length
+
+    const gentleEmailResults: Array<{ vault_id: string; owner_id: string; result: unknown }> = []
+    for (const row of gentle) {
+      const { data, error } = await supabase.auth.admin.getUserById(row.owner_id)
+      if (error || !data?.user?.email) {
+        gentleEmailResults.push({
+          vault_id: row.vault_id,
+          owner_id: row.owner_id,
+          result: { ok: false, error: error?.message ?? 'No email' },
+        })
+        continue
+      }
+
+      const email = data.user.email
+      const signInUrl = appUrl ? `${appUrl.replace(/\/$/, '')}/vault` : ''
+      const subject = 'Quick check-in reminder from Evernest'
+      const html = emailShell({
+        title: 'Quick check-in reminder',
+        bodyHtml: `<p>If you’re able, please sign in and check in. This helps keep your vault private and prevents accidental handover.</p>${
+          signInUrl ? `<p>${linkHtml(signInUrl, 'Sign in')}</p>` : ''
+        }`,
+        appUrl,
       })
-      continue
+      const text = `Quick check-in reminder.\n\nIf you’re able, please sign in and check in.\n${signInUrl ? `\nSign in: ${signInUrl}\n` : ''}`
+      const result = await sendResendEmail({ to: email, subject, html, text })
+      gentleEmailResults.push({ vault_id: row.vault_id, owner_id: row.owner_id, result })
+
+      if ((result as any)?.ok || (result as any)?.skipped) {
+        await supabase
+          .from('vaults')
+          .update({ gentle_emailed_at: new Date().toISOString() })
+          .eq('id', row.vault_id)
+      }
     }
 
-    const email = data.user.email
-    const signInUrl = appUrl ? `${appUrl.replace(/\/$/, '')}/vault` : ''
-    const subject = 'Quick check-in reminder from Evernest'
-    const html = emailShell({
-      title: 'Quick check-in reminder',
-      bodyHtml: `<p>If you’re able, please sign in and check in. This helps keep your vault private and prevents accidental handover.</p>${
-        signInUrl ? `<p>${linkHtml(signInUrl, 'Sign in')}</p>` : ''
-      }`,
-      appUrl,
-    })
-    const text = `Quick check-in reminder.\n\nIf you’re able, please sign in and check in.\n${signInUrl ? `\nSign in: ${signInUrl}\n` : ''}`
-    const result = await sendResendEmail({ to: email, subject, html, text })
-    gentleEmailResults.push({ vault_id: row.vault_id, owner_id: row.owner_id, result })
+    const warningEmailResults: Array<{ vault_id: string; owner_id: string; result: unknown }> = []
+    for (const row of warning) {
+      const { data, error } = await supabase.auth.admin.getUserById(row.owner_id)
+      if (error || !data?.user?.email) {
+        warningEmailResults.push({
+          vault_id: row.vault_id,
+          owner_id: row.owner_id,
+          result: { ok: false, error: error?.message ?? 'No email' },
+        })
+        continue
+      }
 
-    if ((result as any)?.ok || (result as any)?.skipped) {
-      await supabase
-        .from('vaults')
-        .update({ gentle_emailed_at: new Date().toISOString() })
-        .eq('id', row.vault_id)
-    }
-  }
-
-  const warningEmailResults: Array<{ vault_id: string; owner_id: string; result: unknown }> = []
-  for (const row of warning) {
-    const { data, error } = await supabase.auth.admin.getUserById(row.owner_id)
-    if (error || !data?.user?.email) {
-      warningEmailResults.push({
-        vault_id: row.vault_id,
-        owner_id: row.owner_id,
-        result: { ok: false, error: error?.message ?? 'No email' },
-      })
-      continue
-    }
-
-    const email = data.user.email
-    const signInUrl = appUrl ? `${appUrl.replace(/\/$/, '')}/vault` : ''
-    const subject = 'Important: please confirm you’re OK'
-    const html = emailShell({
-      title: 'Please confirm you’re OK',
-      bodyHtml: `<p>We haven’t received a check-in within the required timeframe.</p>
+      const email = data.user.email
+      const signInUrl = appUrl ? `${appUrl.replace(/\/$/, '')}/vault` : ''
+      const subject = 'Important: please confirm you’re OK'
+      const html = emailShell({
+        title: 'Please confirm you’re OK',
+        bodyHtml: `<p>We haven’t received a check-in within the required timeframe.</p>
 <p>If you’re OK and want to keep everything private, please sign in and check in.</p>${
-        signInUrl ? `<p>${linkHtml(signInUrl, 'Sign in & check in')}</p>` : ''
-      }`,
-      appUrl,
-    })
-    const text = `Please confirm you’re OK.\n\nWe haven’t received a check-in within the required timeframe.\n${
-      signInUrl ? `\nSign in & check in: ${signInUrl}\n` : ''
-    }`
-    const result = await sendResendEmail({ to: email, subject, html, text })
-    warningEmailResults.push({ vault_id: row.vault_id, owner_id: row.owner_id, result })
+          signInUrl ? `<p>${linkHtml(signInUrl, 'Sign in & check in')}</p>` : ''
+        }`,
+        appUrl,
+      })
+      const text = `Please confirm you’re OK.\n\nWe haven’t received a check-in within the required timeframe.\n${
+        signInUrl ? `\nSign in & check in: ${signInUrl}\n` : ''
+      }`
+      const result = await sendResendEmail({ to: email, subject, html, text })
+      warningEmailResults.push({ vault_id: row.vault_id, owner_id: row.owner_id, result })
 
-    if ((result as any)?.ok || (result as any)?.skipped) {
-      await supabase
-        .from('vaults')
-        .update({ warning_emailed_at: new Date().toISOString() })
-        .eq('id', row.vault_id)
-    }
-  }
-
-  const { data: pulseRows, error: pulseErr } = await supabase
-    .from('vaults')
-    .select('id,owner_id,pending_release_expires_at,pending_release_owner_emailed_at')
-    .eq('deadman_status', 'pending_release')
-    .is('pending_release_owner_emailed_at', null)
-
-  if (pulseErr) return jsonResponse(500, { error: pulseErr.message })
-
-  const pulseEmailResults: Array<{ vault_id: string; owner_id: string; result: unknown }> = []
-  for (const row of (pulseRows ?? []) as any[]) {
-    const vaultId = (row as any).id as string
-    const ownerId = (row as any).owner_id as string
-    const expiresAt = (row as any).pending_release_expires_at as string | null
-
-    const { data, error } = await supabase.auth.admin.getUserById(ownerId)
-    if (error || !data?.user?.email) {
-      pulseEmailResults.push({ vault_id: vaultId, owner_id: ownerId, result: { ok: false, error: error?.message ?? 'No email' } })
-      continue
+      if ((result as any)?.ok || (result as any)?.skipped) {
+        await supabase
+          .from('vaults')
+          .update({ warning_emailed_at: new Date().toISOString() })
+          .eq('id', row.vault_id)
+      }
     }
 
-    const cancelUrl = appUrl ? `${appUrl.replace(/\/$/, '')}/vault?cancelRelease=1` : ''
-    const subject = 'Release started — cancel within 24 hours if needed'
-    const html = emailShell({
-      title: 'Release started',
-      bodyHtml: `<p>A release request has been initiated for your Evernest vault.</p>
+    const { data: pulseRows, error: pulseErr } = await supabase
+      .from('vaults')
+      .select('id,owner_id,pending_release_expires_at,pending_release_owner_emailed_at')
+      .eq('deadman_status', 'pending_release')
+      .is('pending_release_owner_emailed_at', null)
+
+    if (pulseErr) throw pulseErr
+    pulseCandidates = (pulseRows ?? []).length
+
+    const pulseEmailResults: Array<{ vault_id: string; owner_id: string; result: unknown }> = []
+    for (const row of (pulseRows ?? []) as any[]) {
+      const vaultId = (row as any).id as string
+      const ownerId = (row as any).owner_id as string
+      const expiresAt = (row as any).pending_release_expires_at as string | null
+
+      const { data, error } = await supabase.auth.admin.getUserById(ownerId)
+      if (error || !data?.user?.email) {
+        pulseEmailResults.push({
+          vault_id: vaultId,
+          owner_id: ownerId,
+          result: { ok: false, error: error?.message ?? 'No email' },
+        })
+        continue
+      }
+
+      const cancelUrl = appUrl ? `${appUrl.replace(/\/$/, '')}/vault?cancelRelease=1` : ''
+      const subject = 'Release started — cancel within 24 hours if needed'
+      const html = emailShell({
+        title: 'Release started',
+        bodyHtml: `<p>A release request has been initiated for your Evernest vault.</p>
 <p>If this is a mistake, you have <strong>24 hours</strong> to cancel.</p>
 ${expiresAt ? `<p>Deadline: <strong>${escapeHtml(expiresAt)}</strong></p>` : ''}${
-        cancelUrl ? `<p>${linkHtml(cancelUrl, 'Cancel release')}</p>` : ''
-      }`,
-      appUrl,
-    })
-    const text = `Release started.\n\nA release request has been initiated for your Evernest vault.\nIf this is a mistake, you have 24 hours to cancel.\n${
-      expiresAt ? `Deadline: ${expiresAt}\n` : ''
-    }${cancelUrl ? `Cancel: ${cancelUrl}\n` : ''}`
+          cancelUrl ? `<p>${linkHtml(cancelUrl, 'Cancel release')}</p>` : ''
+        }`,
+        appUrl,
+      })
+      const text = `Release started.\n\nA release request has been initiated for your Evernest vault.\nIf this is a mistake, you have 24 hours to cancel.\n${
+        expiresAt ? `Deadline: ${expiresAt}\n` : ''
+      }${cancelUrl ? `Cancel: ${cancelUrl}\n` : ''}`
 
-    const result = await sendResendEmail({ to: data.user.email, subject, html, text })
-    pulseEmailResults.push({ vault_id: vaultId, owner_id: ownerId, result })
+      const result = await sendResendEmail({ to: data.user.email, subject, html, text })
+      pulseEmailResults.push({ vault_id: vaultId, owner_id: ownerId, result })
 
-    if ((result as any)?.ok || (result as any)?.skipped) {
-      await supabase
-        .from('vaults')
-        .update({ pending_release_owner_emailed_at: new Date().toISOString() })
-        .eq('id', vaultId)
+      if ((result as any)?.ok || (result as any)?.skipped) {
+        await supabase
+          .from('vaults')
+          .update({ pending_release_owner_emailed_at: new Date().toISOString() })
+          .eq('id', vaultId)
+      }
     }
-  }
 
-  const releaseEmailResults: Array<{ vault_id: string; owner_id: string; owner_result?: unknown; heir_results?: unknown[] }> = []
-  for (const row of release) {
+    const releaseEmailResults: Array<{ vault_id: string; owner_id: string; owner_result?: unknown; heir_results?: unknown[] }> = []
+    for (const row of release) {
     const { data: vaultRow } = await supabase
       .from('vaults')
       .select('id, owner_id, release_owner_emailed_at, release_heirs_emailed_at')
@@ -301,4 +319,29 @@ ${expiresAt ? `<p>Deadline: <strong>${escapeHtml(expiresAt)}</strong></p>` : ''}
     pulse_email_results: pulseEmailResults,
     release_email_results: releaseEmailResults,
   })
+  } catch (e: any) {
+    ok = false
+    responseStatus = 500
+    message = e?.message ?? 'Failed to evaluate deadman switches'
+    return jsonResponse(500, { ok: false, error: message })
+  } finally {
+    const finishedAt = new Date()
+    await supabase
+      .from('system_job_runs')
+      .insert({
+        job_name: 'daily_evaluate_deadman_switches',
+        ok,
+        started_at: startedAt.toISOString(),
+        finished_at: finishedAt.toISOString(),
+        detail: {
+          message,
+          gentle_candidates: gentleCandidates,
+          warning_candidates: warningCandidates,
+          release_candidates: releaseCandidates,
+          pulse_candidates: pulseCandidates,
+          status: responseStatus,
+        },
+      })
+      .catch(() => {})
+  }
 })

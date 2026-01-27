@@ -113,7 +113,9 @@ export function AdminSystemHealth() {
                 <div className="muted" style={{ fontSize: 12 }}>
                   {health?.cron_available
                     ? 'Reading pg_cron run history'
-                    : 'Enable pg_cron + pg_net in your Supabase project'}
+                    : health?.last_run
+                      ? 'Using external scheduler (e.g., UptimeRobot) and logging runs'
+                      : 'Enable pg_cron + pg_net, or use an external scheduler'}
                 </div>
               </div>
             </div>

@@ -1,3 +1,15 @@
+create table if not exists public.system_job_runs (
+  id bigserial primary key,
+  job_name text not null,
+  ok boolean not null default true,
+  started_at timestamptz not null default now(),
+  finished_at timestamptz,
+  detail jsonb not null default '{}'::jsonb
+);
+
+create index if not exists system_job_runs_job_name_started_at_idx
+  on public.system_job_runs (job_name, started_at desc);
+
 create or replace function public.admin_system_health()
 returns jsonb
 language plpgsql
@@ -13,7 +25,37 @@ begin
   end if;
 
   if not has_pg_cron then
-    return jsonb_build_object('cron_available', false);
+    select jsonb_build_object(
+      'cron_available', false,
+      'job', jsonb_build_object(
+        'jobname', 'daily_evaluate_deadman_switches',
+        'schedule', null,
+        'active', true
+      ),
+      'last_run', (
+        select jsonb_build_object(
+          'status', case when r.ok then 'succeeded' else 'failed' end,
+          'start_time', r.started_at,
+          'end_time', r.finished_at,
+          'return_message', coalesce(r.detail->>'message', null)
+        )
+        from public.system_job_runs r
+        where r.job_name = 'daily_evaluate_deadman_switches'
+        order by r.started_at desc
+        limit 1
+      ),
+      'counts_7d', (
+        select jsonb_build_object(
+          'success', count(*) filter (where r.ok),
+          'failed', count(*) filter (where not r.ok)
+        )
+        from public.system_job_runs r
+        where r.job_name = 'daily_evaluate_deadman_switches'
+          and r.started_at > now() - interval '7 days'
+      )
+    ) into result;
+
+    return coalesce(result, jsonb_build_object('cron_available', false));
   end if;
 
   select jsonb_build_object(
@@ -59,4 +101,3 @@ $$;
 
 revoke all on function public.admin_system_health() from public;
 grant execute on function public.admin_system_health() to authenticated;
-
