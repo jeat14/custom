@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { supabase, supabaseMissingEnv } from '../supabaseClient'
 import { useSupabaseSession } from '../hooks/useSupabaseSession'
@@ -188,10 +188,41 @@ export function Pricing() {
 
   const priceText = '£7.99 / month'
 
-  const featureRows = [
+  const tooltipStyle: Record<string, any> = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 16,
+    height: 16,
+    borderRadius: 999,
+    border: '1px solid var(--border)',
+    color: 'var(--muted)',
+    fontSize: 11,
+    lineHeight: 1,
+    marginLeft: 6,
+    cursor: 'help',
+    userSelect: 'none',
+  }
+
+  const priorityHandlingTooltip = 'Heir verification requests are reviewed within 4 business hours.'
+
+  type FeatureRow = { feature: string; free: ReactNode; pro: ReactNode }
+
+  const featureRows: FeatureRow[] = [
     { feature: 'Secure Storage', free: 'Included', pro: 'Included' },
     { feature: 'End‑to‑End Encryption', free: 'Included', pro: 'Included' },
-    { feature: 'Heir Handover', free: 'Included', pro: 'Included + priority handling' },
+    {
+      feature: 'Heir Handover',
+      free: 'Included',
+      pro: (
+        <span>
+          Included + priority handling
+          <span role="img" aria-label="What does priority handling mean?" title={priorityHandlingTooltip} style={tooltipStyle}>
+            i
+          </span>
+        </span>
+      ),
+    },
     { feature: 'Support', free: 'Community / standard', pro: 'Priority support' },
     { feature: 'Monthly Price', free: '£0', pro: '£7.99' },
   ]
@@ -203,7 +234,7 @@ export function Pricing() {
           <div>
             <h1 style={{ margin: 0, letterSpacing: -0.4 }}>Pricing</h1>
             <div className="muted" style={{ marginTop: 8, lineHeight: 1.6 }}>
-              Everything in Free, plus the peace‑of‑mind of priority support and ongoing security investment.
+              Secure your digital legacy with priority heir handover and ongoing security hardening.
             </div>
           </div>
           <div className="pill" style={{ fontSize: 12 }}>
@@ -251,7 +282,12 @@ export function Pricing() {
             <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13 }}>
               <div>✓ Everything in Free</div>
               <div>✓ Priority support</div>
-              <div>✓ Priority handling for heir handover requests</div>
+              <div>
+                ✓ Priority handling for heir handover requests
+                <span role="img" aria-label="What does priority handling mean?" title={priorityHandlingTooltip} style={tooltipStyle}>
+                  i
+                </span>
+              </div>
               <div>✓ Helps fund audits and security hardening</div>
             </div>
 
@@ -265,6 +301,9 @@ export function Pricing() {
                   {isBusy ? 'Opening…' : session ? 'Unlock Pro Features' : 'Sign in to upgrade'}
                 </button>
               )}
+            </div>
+            <div className="muted" style={{ marginTop: 8, fontSize: 12, lineHeight: 1.6 }}>
+              Cancel anytime. Secure checkout by Stripe.
             </div>
           </div>
         </div>
@@ -296,6 +335,9 @@ export function Pricing() {
                 ))}
               </tbody>
             </table>
+          </div>
+          <div className="muted" style={{ marginTop: 10, fontSize: 13, lineHeight: 1.6 }}>
+            Trusted by early adopters securing their digital estates with Evernest.
           </div>
         </div>
 
