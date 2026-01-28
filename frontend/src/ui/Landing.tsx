@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom'
 
 export function Landing() {
+  const rawContactEmail = import.meta.env.VITE_CONTACT_EMAIL as string | undefined
+  const contactEmail = rawContactEmail?.match(/<([^>]+)>/)?.[1] ?? rawContactEmail
+
   return (
     <div style={{ padding: 24, maxWidth: 980, margin: '0 auto' }}>
       <div className="card" style={{ padding: 22 }}>
@@ -30,8 +33,16 @@ export function Landing() {
         <div className="muted" style={{ marginTop: 16, fontSize: 13, lineHeight: 1.6 }}>
           Evernest cannot reset your Vault Password. Recovery materials must be stored offline.
         </div>
+
+        {contactEmail ? (
+          <div className="muted" style={{ marginTop: 10, fontSize: 13, lineHeight: 1.6 }}>
+            Contact:{' '}
+            <a href={`mailto:${contactEmail}`} style={{ color: 'inherit' }}>
+              {contactEmail}
+            </a>
+          </div>
+        ) : null}
       </div>
     </div>
   )
 }
-

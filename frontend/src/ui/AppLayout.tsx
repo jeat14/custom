@@ -11,6 +11,8 @@ export function AppLayout() {
   const { session } = useSupabaseSession()
   const navigate = useNavigate()
   const location = useLocation()
+  const rawContactEmail = import.meta.env.VITE_CONTACT_EMAIL as string | undefined
+  const contactEmail = rawContactEmail?.match(/<([^>]+)>/)?.[1] ?? rawContactEmail
 
   useEffect(() => {
     capture('$pageview', {
@@ -68,7 +70,14 @@ export function AppLayout() {
           color: 'var(--muted)',
         }}
       >
-        <div>Evernest</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div>Evernest</div>
+          {contactEmail ? (
+            <a href={`mailto:${contactEmail}`} style={{ color: 'inherit', textDecoration: 'none' }}>
+              {contactEmail}
+            </a>
+          ) : null}
+        </div>
         <div style={{ display: 'flex', gap: 12 }}>
           <Link to="/security-audit">Security Audit</Link>
           <Link to="/heir">Heir Handover</Link>
