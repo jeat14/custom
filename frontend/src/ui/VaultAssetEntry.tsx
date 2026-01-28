@@ -331,31 +331,12 @@ export function VaultAssetEntry() {
   useEffect(() => {
     const q = new URLSearchParams(window.location.search)
     const checkout = q.get('checkout')
-    const cancelRelease = q.get('cancelRelease')
-    if (!checkout && !cancelRelease) return
-
-    const run = async () => {
-      if (checkout === 'success') setToast('Upgrade complete')
-      if (checkout === 'cancel') setToast('Checkout canceled')
-
-      if (cancelRelease) {
-        const client = supabase!
-        const { data } = await client.auth.getSession()
-        if (!data.session) {
-          setToast('Sign in to cancel release')
-        } else {
-          const { error } = await client.rpc('cancel_pending_release')
-          setToast(error ? 'Cancel failed' : 'Release canceled')
-        }
-      }
-
-      q.delete('checkout')
-      q.delete('cancelRelease')
-      const next = `${window.location.pathname}${q.toString() ? `?${q.toString()}` : ''}${window.location.hash}`
-      window.history.replaceState(null, '', next)
-    }
-
-    void run()
+    if (!checkout) return
+    if (checkout === 'success') setToast('Upgrade complete')
+    if (checkout === 'cancel') setToast('Checkout canceled')
+    q.delete('checkout')
+    const next = `${window.location.pathname}${q.toString() ? `?${q.toString()}` : ''}${window.location.hash}`
+    window.history.replaceState(null, '', next)
   }, [])
 
   useEffect(() => {
@@ -806,9 +787,15 @@ export function VaultAssetEntry() {
                 </button>
               </>
             ) : billingPlan === 'free' ? (
-              <button type="button" onClick={() => void startCheckout()} disabled={!isConnected || isStartingCheckout}>
-                {isStartingCheckout ? 'Opening…' : 'Upgrade'}
-              </button>
+              isConnected ? (
+                <Link to="/pricing" style={{ textDecoration: 'none' }}>
+                  <button type="button">Upgrade</button>
+                </Link>
+              ) : (
+                <button type="button" disabled>
+                  Upgrade
+                </button>
+              )
             ) : null}
             <div className="pill" style={{ fontSize: 12 }}>
               AES-256-GCM
@@ -981,15 +968,7 @@ export function VaultAssetEntry() {
               const isNote = item.kind === 'note' || item.label.toLowerCase().includes('letter')
               return (
                 <div key={item.id} className="vaultItemRow">
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <span
-                      title="Encrypted on your device. Even Evernest cannot see this."
-                      style={{ display: 'inline-flex', opacity: 0.9 }}
-                    >
-                      <IconLock size={16} />
-                    </span>
-                    <input value={item.label} onChange={(e: any) => updateItem(cat.key, item.id, { label: e.target.value })} />
-                  </div>
+                  <input value={item.label} onChange={(e: any) => updateItem(cat.key, item.id, { label: e.target.value })} />
                   {isNote ? (
                     <AutoTextarea
                       value={item.value}

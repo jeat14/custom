@@ -19,6 +19,9 @@ export function Landing() {
               Sign In
             </button>
           </Link>
+          <Link to="/pricing" style={{ textDecoration: 'none' }}>
+            <button type="button">Pricing</button>
+          </Link>
           <Link to="/security-audit" style={{ textDecoration: 'none' }}>
             <button type="button">Security Audit</button>
           </Link>

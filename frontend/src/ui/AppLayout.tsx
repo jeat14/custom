@@ -81,6 +81,7 @@ export function AppLayout() {
         <div style={{ display: 'flex', gap: 12 }}>
           <Link to="/security-audit">Security Audit</Link>
           <Link to="/heir">Heir Handover</Link>
+          <Link to="/pricing">Pricing</Link>
           <Link to="/terms">Terms</Link>
           <Link to="/privacy">Privacy</Link>
           <Link to="/support">Support</Link>

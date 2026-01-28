@@ -8,21 +8,23 @@ import { Login } from './ui/Login'
 import { RequireAuth } from './ui/RequireAuth'
 import { RequireAdmin } from './ui/RequireAdmin'
 import { Privacy } from './ui/Privacy'
+import { Pricing } from './ui/Pricing'
 import { SecurityAudit } from './ui/SecurityAudit'
 import { Support } from './ui/Support'
 import { Terms } from './ui/Terms'
 import { VaultAssetEntry } from './ui/VaultAssetEntry'
 
 export const router = createBrowserRouter([
+  { path: '/login', element: <Login /> },
   {
     path: '/',
     element: <AppLayout />,
     children: [
       { index: true, element: <Landing /> },
-      { path: 'login', element: <Login /> },
       { path: 'vault', element: <RequireAuth><VaultAssetEntry /></RequireAuth> },
       { path: 'heir', element: <RequireAuth><HeirHandover /></RequireAuth> },
       { path: 'security-audit', element: <SecurityAudit /> },
+      { path: 'pricing', element: <Pricing /> },
       { path: 'terms', element: <Terms /> },
       { path: 'privacy', element: <Privacy /> },
       { path: 'support', element: <Support /> },
