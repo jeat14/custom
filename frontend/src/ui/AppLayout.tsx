@@ -5,6 +5,7 @@ import { supabase } from '../supabaseClient'
 import { useSupabaseSession } from '../hooks/useSupabaseSession'
 import { FeedbackWidget } from './FeedbackWidget'
 import { capture } from '../analytics'
+import { Analytics } from '@vercel/analytics/react'
 
 export function AppLayout() {
   useVaultCheckInOncePerSession()
@@ -78,6 +79,7 @@ export function AppLayout() {
           <FeedbackWidget userId={session?.user?.id ?? null} />
         </div>
       </footer>
+      <Analytics />
     </div>
   )
 }
