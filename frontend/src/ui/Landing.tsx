@@ -10,7 +10,6 @@ export function Landing() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
           <h1 style={{ margin: 0, letterSpacing: -0.4 }}>Evernest</h1>
           <div style={{ display: 'flex', gap: 12, fontSize: 13, alignItems: 'center', flexWrap: 'wrap' }}>
-            <Link to="/security-audit">Security Audit</Link>
             <Link to="/pricing">Pricing</Link>
             <Link to="/support">Support</Link>
           </div>
@@ -19,6 +18,10 @@ export function Landing() {
         <div className="muted" style={{ marginTop: 10, lineHeight: 1.6 }}>
           Secure, zero-knowledge vaulting for your digital estate — so nothing important is lost. Store what matters, generate a
           recovery kit, and control heir handover with a built-in duty-of-care safeguard.
+        </div>
+
+        <div className="muted" style={{ marginTop: 10, lineHeight: 1.6 }}>
+          Built to be there for the people you trust — without putting your data in ours.
         </div>
 
         <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -42,11 +45,14 @@ export function Landing() {
         </div>
 
         <div className="muted" style={{ marginTop: 12, fontSize: 13, lineHeight: 1.7 }}>
-          <span>Zero-knowledge by design</span> · <span>Client-side encryption</span> · <Link to="/security">View security details</Link>
+          <span>Zero-knowledge by design</span> · <span>Client-side encryption</span> ·{' '}
+          <Link to="/security" style={{ opacity: 0.85 }}>
+            Security details
+          </Link>
         </div>
 
         <div className="muted" style={{ marginTop: 14, fontSize: 13, lineHeight: 1.7 }}>
-          For those who want the technical details, we publish our <Link to="/security">security design and limitations</Link>.
+          For those who want the technical details, we publish our security design and limitations.
         </div>
 
         <div className="muted" style={{ marginTop: 14, fontSize: 13, lineHeight: 1.6 }}>
