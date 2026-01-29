@@ -53,6 +53,21 @@ export function Login() {
   return (
     <div style={{ padding: 24, maxWidth: 760, margin: '0 auto' }}>
       <div className="card" style={{ padding: 18 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={() => {
+              if (window.history.length > 1) navigate(-1)
+              else navigate('/')
+            }}
+            style={{ padding: '8px 10px', boxShadow: 'none' }}
+          >
+            Back
+          </button>
+          <Link to="/" style={{ textDecoration: 'none', fontSize: 13 }}>
+            Home
+          </Link>
+        </div>
         <h1 style={{ margin: 0, letterSpacing: -0.3 }}>Sign In</h1>
         <div className="muted" style={{ marginTop: 8 }}>
           Use a magic link so you don’t need a password for the website. Your Vault Password is separate.
