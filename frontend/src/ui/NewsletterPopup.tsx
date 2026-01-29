@@ -91,6 +91,14 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
         user_agent: navigator.userAgent || null,
       })
       if (error) {
+        if ((error as any).code === '42P01' || (error as any).code === '42501') {
+          if (props.contactEmail) {
+            setError(`Signup is being enabled. Email us at ${props.contactEmail}.`)
+          } else {
+            setError('Signup is being enabled. Try again shortly.')
+          }
+          return
+        }
         if ((error as any).code === '23505') {
           setMessage('You’re already on the list. Thanks.')
           dismissForDays(365)
@@ -157,4 +165,3 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
     </div>
   )
 }
-
