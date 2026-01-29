@@ -104,6 +104,9 @@ export function Security() {
           >
             <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: -0.1, color: 'rgba(255, 255, 255, 0.86)' }}>Encryption model</div>
             <div style={{ marginTop: 10, lineHeight: 1.75, color: 'rgba(255, 255, 255, 0.72)', fontSize: 13 }}>
+              <div style={{ marginBottom: 10 }}>
+                The following section explains how encryption works for those who want technical specifics.
+              </div>
               <div>
                 <strong style={{ color: 'rgba(255, 255, 255, 0.88)' }}>Content encryption:</strong> AES‑GCM using a 256‑bit key, with a 12‑byte random IV per encryption.
               </div>
@@ -187,8 +190,9 @@ export function Security() {
             <div style={{ marginTop: 10, lineHeight: 1.75, color: 'rgba(255, 255, 255, 0.72)', fontSize: 13 }}>
               <div>If a device or browser is compromised, client‑side encryption can be bypassed.</div>
               <div style={{ marginTop: 8 }}>
-                If both your Vault Password and offline recovery materials are lost, the vault cannot be decrypted (by design).
+                If you lose your Vault Password and offline recovery materials, your data cannot be recovered (by design).
               </div>
+              <div style={{ marginTop: 8 }}>Evernest cannot verify the correctness of information you store in your vault.</div>
               <div style={{ marginTop: 8 }}>Users are responsible for securely storing recovery materials offline.</div>
             </div>
           </div>
