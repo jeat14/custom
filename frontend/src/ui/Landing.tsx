@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { NewsletterPopup } from './NewsletterPopup'
 
 export function Landing() {
   const rawContactEmail = import.meta.env.VITE_CONTACT_EMAIL as string | undefined
@@ -68,6 +69,7 @@ export function Landing() {
           </div>
         ) : null}
       </div>
+      <NewsletterPopup contactEmail={contactEmail ?? null} />
     </div>
   )
 }
