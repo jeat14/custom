@@ -13,6 +13,7 @@ export function AppLayout() {
   const location = useLocation()
   const rawContactEmail = import.meta.env.VITE_CONTACT_EMAIL as string | undefined
   const contactEmail = rawContactEmail?.match(/<([^>]+)>/)?.[1] ?? rawContactEmail
+  const showBack = location.pathname !== '/'
 
   useEffect(() => {
     capture('$pageview', {
@@ -34,9 +35,23 @@ export function AppLayout() {
             alignItems: 'center',
           }}
         >
-          <Link to="/" style={{ textDecoration: 'none' }}>
-            <div style={{ fontWeight: 750, letterSpacing: -0.2 }}>Evernest</div>
-          </Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {showBack ? (
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.history.length > 1) navigate(-1)
+                  else navigate('/')
+                }}
+                style={{ padding: '8px 10px', boxShadow: 'none' }}
+              >
+                Back
+              </button>
+            ) : null}
+            <Link to="/" style={{ textDecoration: 'none' }}>
+              <div style={{ fontWeight: 750, letterSpacing: -0.2 }}>Evernest</div>
+            </Link>
+          </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {session?.user?.email ? (
