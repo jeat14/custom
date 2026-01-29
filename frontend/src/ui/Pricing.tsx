@@ -309,7 +309,7 @@ export function Pricing() {
                 </button>
               ) : (
                 <button type="button" className="primary" onClick={() => void startCheckout()} disabled={isBusy}>
-                  {isBusy ? 'Opening…' : session ? 'Unlock Pro Features' : 'Sign in to upgrade'}
+                  {isBusy ? 'Opening…' : session ? 'Upgrade for peace of mind' : 'Sign in to upgrade'}
                 </button>
               )}
             </div>
@@ -333,9 +333,9 @@ export function Pricing() {
         <div style={{ marginTop: 16 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
             <h2 style={{ margin: 0, fontSize: 16, letterSpacing: -0.2 }}>Free vs Pro</h2>
-            <Link to="/security-audit" style={{ textDecoration: 'none' }}>
+            <Link to="/security" style={{ textDecoration: 'none' }}>
               <span className="pill" style={{ fontSize: 12 }}>
-                Read our security self‑audit
+                Read security details
               </span>
             </Link>
           </div>
@@ -427,6 +427,9 @@ export function Pricing() {
 
         <div style={{ marginTop: 18 }}>
           <h2 style={{ margin: 0, fontSize: 16, letterSpacing: -0.2 }}>FAQ</h2>
+          <div className="muted" style={{ marginTop: 6, fontSize: 13, lineHeight: 1.6 }}>
+            If you’re unsure, start free — you can upgrade anytime.
+          </div>
           <div style={{ marginTop: 10, display: 'grid', gap: 10 }}>
             <details className="card" style={{ padding: 12 }}>
               <summary style={{ cursor: 'pointer', fontWeight: 650 }}>Can I cancel anytime?</summary>

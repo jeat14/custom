@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom'
+import { Navigate, createBrowserRouter } from 'react-router-dom'
 import { AppLayout } from './ui/AppLayout'
 import { AdminPendingVerifications } from './ui/AdminPendingVerifications'
 import { AdminSystemHealth } from './ui/AdminSystemHealth'
@@ -9,7 +9,7 @@ import { RequireAuth } from './ui/RequireAuth'
 import { RequireAdmin } from './ui/RequireAdmin'
 import { Privacy } from './ui/Privacy'
 import { Pricing } from './ui/Pricing'
-import { SecurityAudit } from './ui/SecurityAudit'
+import { Security } from './ui/Security'
 import { Support } from './ui/Support'
 import { Terms } from './ui/Terms'
 import { VaultAssetEntry } from './ui/VaultAssetEntry'
@@ -23,7 +23,8 @@ export const router = createBrowserRouter([
       { index: true, element: <Landing /> },
       { path: 'vault', element: <RequireAuth><VaultAssetEntry /></RequireAuth> },
       { path: 'heir', element: <RequireAuth><HeirHandover /></RequireAuth> },
-      { path: 'security-audit', element: <SecurityAudit /> },
+      { path: 'security', element: <Security /> },
+      { path: 'security-audit', element: <Navigate to="/security" replace /> },
       { path: 'pricing', element: <Pricing /> },
       { path: 'terms', element: <Terms /> },
       { path: 'privacy', element: <Privacy /> },

@@ -83,7 +83,7 @@ export function Login() {
         ) : null}
 
         <div className="muted" style={{ marginTop: 14, fontSize: 13, display: 'flex', gap: 12 }}>
-          <Link to="/security-audit">Security Audit</Link>
+          <Link to="/security">Security</Link>
           <Link to="/terms">Terms</Link>
           <Link to="/privacy">Privacy</Link>
           <Link to="/support">Support</Link>
