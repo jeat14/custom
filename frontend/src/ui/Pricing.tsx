@@ -15,6 +15,7 @@ export function Pricing() {
   const [isBusy, setIsBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  const [demoStep, setDemoStep] = useState(0)
 
   const checkoutStatus = useMemo(() => {
     const s = new URLSearchParams(location.search).get('checkout')
@@ -303,13 +304,20 @@ export function Pricing() {
               )}
             </div>
             <div className="muted" style={{ marginTop: 8, fontSize: 12, lineHeight: 1.6 }}>
-              Cancel anytime. Secure checkout by Stripe.
+              Secure checkout by Stripe. Cancel anytime with one click.
             </div>
           </div>
         </div>
 
         <div style={{ marginTop: 16 }}>
-          <h2 style={{ margin: 0, fontSize: 16, letterSpacing: -0.2 }}>Free vs Pro</h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
+            <h2 style={{ margin: 0, fontSize: 16, letterSpacing: -0.2 }}>Free vs Pro</h2>
+            <Link to="/security-audit" style={{ textDecoration: 'none' }}>
+              <span className="pill" style={{ fontSize: 12 }}>
+                Read our security self‑audit
+              </span>
+            </Link>
+          </div>
           <div className="muted" style={{ marginTop: 6, fontSize: 13, lineHeight: 1.6 }}>
             Simple comparison to make the decision easy.
           </div>
@@ -338,6 +346,61 @@ export function Pricing() {
           </div>
           <div className="muted" style={{ marginTop: 10, fontSize: 13, lineHeight: 1.6 }}>
             Trusted by early adopters securing their digital estates with Evernest.
+          </div>
+        </div>
+
+        <div style={{ marginTop: 18 }}>
+          <h2 style={{ margin: 0, fontSize: 16, letterSpacing: -0.2 }}>Heir Handover Preview</h2>
+          <div className="muted" style={{ marginTop: 6, fontSize: 13, lineHeight: 1.6 }}>
+            See the flow in seconds: secure today, protected tomorrow.
+          </div>
+
+          <div className="card" style={{ padding: 14, marginTop: 10 }}>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                {[
+                  { title: '1) Create Vault', text: 'Add your critical accounts and recovery notes.' },
+                  { title: '2) Set Heir', text: 'Choose an heir and configure your handover.' },
+                  { title: '3) Verified Release', text: 'Requests are reviewed, then the heir receives access.' },
+                ].map((s, idx) => (
+                  <button
+                    key={s.title}
+                    type="button"
+                    onClick={() => setDemoStep(idx)}
+                    style={{
+                      padding: '8px 10px',
+                      border: idx === demoStep ? '1px solid var(--accent)' : '1px solid var(--border)',
+                      background: idx === demoStep ? 'rgba(16, 185, 129, 0.08)' : 'transparent',
+                      borderRadius: 12,
+                      fontSize: 13,
+                      fontWeight: 650,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {s.title}
+                  </button>
+                ))}
+              </div>
+              <button type="button" onClick={() => setDemoStep((n) => (n + 1) % 3)} style={{ padding: '8px 10px', borderRadius: 12 }}>
+                Next
+              </button>
+            </div>
+
+            <div style={{ marginTop: 12 }}>
+              {demoStep === 0 ? (
+                <div className="muted" style={{ fontSize: 13, lineHeight: 1.7 }}>
+                  Build your nest with the accounts, PINs, and recovery details your loved ones would otherwise struggle to find.
+                </div>
+              ) : demoStep === 1 ? (
+                <div className="muted" style={{ fontSize: 13, lineHeight: 1.7 }}>
+                  Assign an heir and keep your vault protected behind verification. Your encrypted vault stays private.
+                </div>
+              ) : (
+                <div className="muted" style={{ fontSize: 13, lineHeight: 1.7 }}>
+                  If an heir requests access, the verification step prevents abuse. Pro includes priority handling of reviews.
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
