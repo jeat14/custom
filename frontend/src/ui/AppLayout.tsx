@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useVaultCheckInOncePerSession } from '../hooks/useVaultCheckInOncePerSession'
 import { supabase } from '../supabaseClient'
 import { useSupabaseSession } from '../hooks/useSupabaseSession'
@@ -14,6 +14,7 @@ export function AppLayout() {
   const rawContactEmail = import.meta.env.VITE_CONTACT_EMAIL as string | undefined
   const contactEmail = rawContactEmail?.match(/<([^>]+)>/)?.[1] ?? rawContactEmail
   const showBack = location.pathname !== '/'
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
     capture('$pageview', {
@@ -22,6 +23,33 @@ export function AppLayout() {
       user_id: session?.user?.id ?? null,
     })
   }, [location.pathname, location.search, session?.user?.id])
+
+  useEffect(() => {
+    const client = supabase
+    if (!client || !session?.user?.id) {
+      setIsAdmin(false)
+      return
+    }
+
+    let canceled = false
+    void (async () => {
+      try {
+        const { data, error } = await client.rpc('is_admin')
+        if (canceled) return
+        if (error) {
+          setIsAdmin(false)
+          return
+        }
+        setIsAdmin(Boolean(data))
+      } catch {
+        if (!canceled) setIsAdmin(false)
+      }
+    })()
+
+    return () => {
+      canceled = true
+    }
+  }, [session?.user?.id])
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -59,6 +87,13 @@ export function AppLayout() {
                 <span className="pill" style={{ fontSize: 12 }}>
                   {session.user.email}
                 </span>
+                {isAdmin ? (
+                  <Link to="/admin/system-health" style={{ textDecoration: 'none' }}>
+                    <button type="button" style={{ padding: '8px 10px', boxShadow: 'none' }}>
+                      Admin
+                    </button>
+                  </Link>
+                ) : null}
                 <button type="button" onClick={() => void supabase?.auth.signOut()}>
                   Sign Out
                 </button>
