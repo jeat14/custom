@@ -47,7 +47,7 @@ export function SecurityAudit() {
       </div>
 
       <div className="card" style={{ padding: 18, marginBottom: 16 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: -0.1 }}>Duty-of-care gate</div>
+        <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: -0.1 }}>Duty-of-care safeguard</div>
         <div className="muted" style={{ marginTop: 8, lineHeight: 1.7 }}>
           <div>Automation can mark a vault as released after inactivity thresholds (dead-man switch).</div>
           <div>

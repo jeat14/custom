@@ -11,6 +11,9 @@ export function Pricing() {
   const location = useLocation()
   const { session, isLoading: isSessionLoading } = useSupabaseSession()
 
+  const rawContactEmail = import.meta.env.VITE_CONTACT_EMAIL as string | undefined
+  const contactEmail = rawContactEmail?.match(/<([^>]+)>/)?.[1] ?? rawContactEmail
+
   const [billingPlan, setBillingPlan] = useState<BillingPlan>('unknown')
   const [isBusy, setIsBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -205,7 +208,8 @@ export function Pricing() {
     userSelect: 'none',
   }
 
-  const priorityHandlingTooltip = 'Heir verification requests are reviewed within 4 business hours.'
+  const priorityHandlingTooltip =
+    'Faster review if a handover request is submitted. Pro requests are reviewed within 4 business hours. Free still works; Pro only affects response speed and support.'
 
   type FeatureRow = { feature: string; free: ReactNode; pro: ReactNode }
 
@@ -216,15 +220,15 @@ export function Pricing() {
       feature: 'Heir Handover',
       free: 'Included',
       pro: (
-        <span>
-          Included + priority handling
+        <strong>
+          Included + faster review
           <span role="img" aria-label="What does priority handling mean?" title={priorityHandlingTooltip} style={tooltipStyle}>
             i
           </span>
-        </span>
+        </strong>
       ),
     },
-    { feature: 'Support', free: 'Community / standard', pro: 'Priority support' },
+    { feature: 'Support', free: 'Community / standard', pro: <strong>Priority support</strong> },
     { feature: 'Monthly Price', free: '£0', pro: '£7.99' },
   ]
 
@@ -235,7 +239,7 @@ export function Pricing() {
           <div>
             <h1 style={{ margin: 0, letterSpacing: -0.4 }}>Pricing</h1>
             <div className="muted" style={{ marginTop: 8, lineHeight: 1.6 }}>
-              Secure your digital legacy with priority heir handover and ongoing security hardening.
+              Secure your digital legacy today with faster heir handover review and priority support.
             </div>
           </div>
           <div className="pill" style={{ fontSize: 12 }}>
@@ -260,6 +264,9 @@ export function Pricing() {
             <div className="muted" style={{ marginTop: 6, lineHeight: 1.6, fontSize: 13 }}>
               Try Evernest and build your first vault.
             </div>
+            <div className="muted" style={{ marginTop: 6, lineHeight: 1.6, fontSize: 12 }}>
+              Best for getting started and long‑term storage.
+            </div>
             <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13 }}>
               <div>✓ Secure vault storage</div>
               <div>✓ End‑to‑end encryption in your browser</div>
@@ -277,19 +284,22 @@ export function Pricing() {
             </div>
             <div style={{ marginTop: 6, fontSize: 22, fontWeight: 800, letterSpacing: -0.4 }}>{priceText}</div>
             <div className="muted" style={{ marginTop: 6, lineHeight: 1.6, fontSize: 13 }}>
-              For people who want the fastest help and ongoing security improvements.
+              For people who want added peace of mind and faster support.
+            </div>
+            <div className="muted" style={{ marginTop: 6, lineHeight: 1.6, fontSize: 12 }}>
+              Best for active monitoring and reassurance.
             </div>
 
             <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13 }}>
               <div>✓ Everything in Free</div>
               <div>✓ Priority support</div>
               <div>
-                ✓ Priority handling for heir handover requests
+                ✓ Faster review if a handover request is submitted
                 <span role="img" aria-label="What does priority handling mean?" title={priorityHandlingTooltip} style={tooltipStyle}>
                   i
                 </span>
               </div>
-              <div>✓ Helps fund audits and security hardening</div>
+              <div>✓ Helps fund independent audits and ongoing security hardening</div>
             </div>
 
             <div style={{ marginTop: 14, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -305,6 +315,17 @@ export function Pricing() {
             </div>
             <div className="muted" style={{ marginTop: 8, fontSize: 12, lineHeight: 1.6 }}>
               Secure checkout by Stripe. Cancel anytime with one click.
+            </div>
+            <div className="muted" style={{ marginTop: 6, fontSize: 12, lineHeight: 1.6 }}>
+              All vaults are treated with the same care. Pro only affects response speed and support.
+            </div>
+            <div className="muted" style={{ marginTop: 6, fontSize: 12, lineHeight: 1.6 }}>
+              Prefer annual? £79/year (2 months free){contactEmail ? (
+                <>
+                  {' '}
+                  — <a href={`mailto:${contactEmail}`} style={{ color: 'inherit' }}>email us</a>
+                </>
+              ) : null}
             </div>
           </div>
         </div>

@@ -22,7 +22,6 @@ import {
 } from '../crypto/zk'
 import type { VaultPayloadV1 } from './WarmNestRenderer'
 import { WarmNestRenderer } from './WarmNestRenderer'
-import { generateSettlementRoadmapPdf } from '../settlementPdf'
 
 type VaultRow = {
   id: string
@@ -36,11 +35,8 @@ type HeirVaultRow = {
 type VerificationRow = {
   id: string
   status: string
-  approve_reason: string | null
   reject_reason: string | null
   proof_of_death_path: string | null
-  supporting_document_path: string | null
-  decided_at: string | null
   updated_at: string
 }
 
@@ -74,10 +70,7 @@ export function HeirHandover() {
   const [shareBPackage, setShareBPackage] = useState<ShareBPackage | null>(null)
   const [verification, setVerification] = useState<VerificationRow | null>(null)
   const [proofFile, setProofFile] = useState<File | null>(null)
-  const [supportingFile, setSupportingFile] = useState<File | null>(null)
   const [isSubmittingProof, setIsSubmittingProof] = useState(false)
-  const [includeSecretsInPdf, setIncludeSecretsInPdf] = useState(false)
-  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false)
 
   const [keyMaterial, setKeyMaterial] = useState<KeyMaterialRow | null>(null)
   const [heirPassword, setHeirPassword] = useState('')
@@ -185,7 +178,7 @@ export function HeirHandover() {
 
       const { data: verRow, error: verErr } = await client
         .from('vault_verification_requests')
-        .select('id,status,approve_reason,reject_reason,proof_of_death_path,supporting_document_path,decided_at,updated_at')
+        .select('id,status,reject_reason,proof_of_death_path,updated_at')
         .eq('vault_id', selectedVaultId)
         .eq('heir_user_id', sessionData.session.user.id)
         .maybeSingle()
@@ -205,6 +198,7 @@ export function HeirHandover() {
       const { data: v, error: vErr } = await client
         .from('vaults')
         .select('id,vault_ciphertext')
+        .eq('id', selectedVaultId)
         .eq('id', selectedVaultId)
         .single()
 
@@ -285,25 +279,12 @@ export function HeirHandover() {
       const { error: uploadErr } = await client.storage.from('proof-of-death').upload(path, proofFile, { upsert: true })
       if (uploadErr) throw uploadErr
 
-      let supportingPath: string | null = null
-      if (supportingFile) {
-        const ext2 = supportingFile.name.includes('.') ? supportingFile.name.split('.').pop() : 'bin'
-        const safeExt2 = (ext2 ?? 'bin').replace(/[^a-z0-9]/gi, '').toLowerCase() || 'bin'
-        supportingPath = `vault/${selectedVaultId}/${sessionData.session.user.id}/${Date.now()}-supporting.${safeExt2}`
-        const { error: uploadErr2 } = await client.storage
-          .from('proof-of-death')
-          .upload(supportingPath, supportingFile, { upsert: true })
-        if (uploadErr2) throw uploadErr2
-      }
-
       const { data: upserted, error: upsertErr } = await client.from('vault_verification_requests').upsert(
         {
           vault_id: selectedVaultId,
           heir_user_id: sessionData.session.user.id,
           status: 'pending',
           proof_of_death_path: path,
-          supporting_document_path: supportingPath,
-          approve_reason: null,
           reject_reason: null,
           updated_at: new Date().toISOString(),
         } as any,
@@ -313,11 +294,10 @@ export function HeirHandover() {
 
       setToast('Submitted for review')
       setProofFile(null)
-      setSupportingFile(null)
 
       const { data: verRow } = await client
         .from('vault_verification_requests')
-        .select('id,status,approve_reason,reject_reason,proof_of_death_path,supporting_document_path,decided_at,updated_at')
+        .select('id,status,reject_reason,proof_of_death_path,updated_at')
         .eq('vault_id', selectedVaultId)
         .eq('heir_user_id', sessionData.session.user.id)
         .maybeSingle()
@@ -466,35 +446,6 @@ export function HeirHandover() {
     URL.revokeObjectURL(url)
   }
 
-  const downloadSettlementPdf = async () => {
-    setError(null)
-    setNotice(null)
-    if (!decryptedPayload || !selectedVaultId) return
-    setIsDownloadingPdf(true)
-    try {
-      const bytes = await generateSettlementRoadmapPdf({
-        vaultId: selectedVaultId,
-        payload: decryptedPayload,
-        includeSecrets: includeSecretsInPdf,
-        dutyOfCareApprovedAtIso: verification?.decided_at ?? null,
-      })
-      const safeBytes = bytes instanceof Uint8Array ? bytes.slice() : new Uint8Array(bytes as any).slice()
-      const blob = new Blob([safeBytes.buffer as ArrayBuffer], { type: 'application/pdf' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `evernest-settlement-roadmap-${selectedVaultId.slice(0, 8)}.pdf`
-      document.body.appendChild(a)
-      a.click()
-      a.remove()
-      URL.revokeObjectURL(url)
-    } catch (e: any) {
-      setError(e?.message ?? 'PDF export failed')
-    } finally {
-      setIsDownloadingPdf(false)
-    }
-  }
-
   if (isLoading) return <div style={{ padding: 24 }}>Loading…</div>
 
   return (
@@ -510,7 +461,6 @@ export function HeirHandover() {
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             <Link to="/security-audit">Security Audit</Link>
             <Link to="/vault">Vault</Link>
-            <Link to="/support">Support</Link>
           </div>
         </div>
 
@@ -561,36 +511,12 @@ export function HeirHandover() {
 
       {selectedVaultId ? (
         <div className="card" style={{ padding: 18, marginBottom: 16 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: -0.1 }}>Step 2 — Duty-of-care verification</div>
+          <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: -0.1 }}>Step 2 — Duty-of-care safeguard</div>
           <div className="muted" style={{ marginTop: 6, fontSize: 12 }}>
-            To access a released vault, submit proof for review. Once approved, you can decrypt locally in your browser.
+            To access a released vault, submit proof for review. This safeguard prevents abuse. Once approved, you can decrypt locally in your browser.
           </div>
 
           <div style={{ marginTop: 12 }}>
-            <div
-              className="progressTrack"
-              style={{ height: 10, borderRadius: 999, overflow: 'hidden', background: 'rgba(31,41,55,0.10)' }}
-            >
-              <div
-                className="progressFill"
-                style={{
-                  height: '100%',
-                  width:
-                    verification?.status === 'approved'
-                      ? '100%'
-                      : verification?.status === 'pending'
-                        ? '66%'
-                        : verification?.status === 'rejected'
-                          ? '66%'
-                          : '0%',
-                }}
-              />
-            </div>
-            <div className="muted" style={{ marginTop: 8, fontSize: 12, display: 'flex', justifyContent: 'space-between' }}>
-              <span>Documents uploaded</span>
-              <span>Under review</span>
-              <span>Approved / Released</span>
-            </div>
             <div className="pill" style={{ fontSize: 12, display: 'inline-flex' }}>
               {verification?.status === 'approved'
                 ? 'Approved'
@@ -608,63 +534,22 @@ export function HeirHandover() {
             </div>
           ) : null}
 
-          {verification?.status === 'approved' && verification.approve_reason ? (
-            <div className="banner" style={{ marginTop: 10 }}>
-              <div style={{ fontSize: 13, fontWeight: 650, letterSpacing: -0.1 }}>Review note</div>
-              <div className="muted" style={{ marginTop: 4, fontSize: 12 }}>
-                {verification.approve_reason}
-              </div>
-            </div>
-          ) : null}
-
           {verification?.status === 'approved' ? (
             <div className="muted" style={{ marginTop: 10, fontSize: 12 }}>
               Approved. Continue below to unlock your heir key and decrypt.
             </div>
           ) : (
-            <div style={{ marginTop: 12 }}>
-              <div className="muted" style={{ fontSize: 12, lineHeight: 1.6 }}>
-                <div style={{ fontSize: 13, fontWeight: 650, letterSpacing: -0.1, color: 'var(--text)' }}>
-                  What to upload
-                </div>
-                <div style={{ marginTop: 6 }}>
-                  <strong>Required:</strong> a clear, high-resolution photo or scan of the official Death Certificate.
-                </div>
-                <div style={{ marginTop: 6 }}>
-                  <strong>Optional:</strong> a supporting document (e.g., Will excerpt or Grant of Probate) if requested during
-                  review for higher-value vaults.
-                </div>
-                <div style={{ marginTop: 6 }}>
-                  <strong>Not accepted:</strong> obituaries or funeral director statements are commonly rejected by major providers.
-                </div>
-              </div>
-
-              <div style={{ marginTop: 10, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <div className="muted" style={{ fontSize: 12 }}>
-                      Required
-                    </div>
-                    <input
-                      type="file"
-                      onChange={(e: any) => setProofFile(e?.target?.files?.[0] ?? null)}
-                      accept=".pdf,.png,.jpg,.jpeg,.webp,.heic"
-                    />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <div className="muted" style={{ fontSize: 12 }}>
-                      Optional
-                    </div>
-                    <input
-                      type="file"
-                      onChange={(e: any) => setSupportingFile(e?.target?.files?.[0] ?? null)}
-                      accept=".pdf,.png,.jpg,.jpeg,.webp,.heic"
-                    />
-                  </div>
-                </div>
-                <button type="button" className="primary" onClick={() => void submitProof()} disabled={isSubmittingProof}>
-                  {isSubmittingProof ? 'Submitting…' : 'Submit for review'}
-                </button>
+            <div style={{ marginTop: 12, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <input
+                type="file"
+                onChange={(e: any) => setProofFile(e?.target?.files?.[0] ?? null)}
+                accept=".pdf,.png,.jpg,.jpeg,.webp,.heic"
+              />
+              <button type="button" className="primary" onClick={() => void submitProof()} disabled={isSubmittingProof}>
+                {isSubmittingProof ? 'Submitting…' : 'Submit proof'}
+              </button>
+              <div className="muted" style={{ fontSize: 12 }}>
+                PDF or image. Uploaded to a private bucket.
               </div>
             </div>
           )}
@@ -724,17 +609,6 @@ export function HeirHandover() {
             <button type="button" onClick={() => downloadJson()} disabled={!decryptedPayload}>
               Download JSON
             </button>
-            <label className="muted" style={{ fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-              <input
-                type="checkbox"
-                checked={includeSecretsInPdf}
-                onChange={(e: any) => setIncludeSecretsInPdf(!!e.target.checked)}
-              />
-              Include secrets in PDF
-            </label>
-            <button type="button" onClick={() => void downloadSettlementPdf()} disabled={!decryptedPayload || isDownloadingPdf}>
-              {isDownloadingPdf ? 'Preparing…' : 'Download Settlement PDF'}
-            </button>
           </div>
 
           <div className="muted" style={{ marginTop: 10, fontSize: 12 }}>
@@ -744,29 +618,11 @@ export function HeirHandover() {
       )}
 
       {decryptedPayload ? (
-        <>
-          <div className="card" style={{ padding: 18, marginBottom: 16 }}>
-            <div style={{ fontSize: 18, fontWeight: 750, letterSpacing: -0.2 }}>Welcome, Digital Guardian</div>
-            <div className="muted" style={{ marginTop: 8, fontSize: 13, lineHeight: 1.6 }}>
-              You’re now viewing decrypted information locally in your browser. Nothing here is sent back to Evernest.
-            </div>
-            <div style={{ marginTop: 12, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-              <button type="button" className="primary" onClick={() => void downloadSettlementPdf()} disabled={isDownloadingPdf}>
-                {isDownloadingPdf ? 'Preparing…' : 'Download Settlement Roadmap PDF'}
-              </button>
-              <label className="muted" style={{ fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                <input
-                  type="checkbox"
-                  checked={includeSecretsInPdf}
-                  onChange={(e: any) => setIncludeSecretsInPdf(!!e.target.checked)}
-                />
-                Include secrets in PDF
-              </label>
-              <Link to="/support">Contact Support</Link>
-            </div>
-          </div>
-          <WarmNestRenderer payload={decryptedPayload} title="Warm Nest" subtitle="A quiet, read-only view of what they left behind." />
-        </>
+        <WarmNestRenderer
+          payload={decryptedPayload}
+          title="Warm Nest"
+          subtitle="A quiet, read-only view of what they left behind."
+        />
       ) : null}
 
       {toast ? (

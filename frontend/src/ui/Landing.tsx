@@ -9,8 +9,8 @@ export function Landing() {
       <div className="card" style={{ padding: 22 }}>
         <h1 style={{ margin: 0, letterSpacing: -0.4 }}>Evernest</h1>
         <div className="muted" style={{ marginTop: 8, lineHeight: 1.6 }}>
-          Secure, zero-knowledge vaulting for your digital estate. Store what matters, generate a recovery kit, and control heir
-          handover with a duty-of-care review.
+          Secure, zero-knowledge vaulting for your digital estate — so nothing important is lost. Store what matters, generate a
+          recovery kit, and control heir handover with a built-in duty-of-care safeguard.
         </div>
 
         <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
