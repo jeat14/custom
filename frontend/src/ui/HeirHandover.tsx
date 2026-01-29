@@ -459,7 +459,7 @@ export function HeirHandover() {
             </div>
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            <Link to="/security">Security</Link>
+            <Link to="/security">Security Audit</Link>
             <Link to="/vault">Vault</Link>
           </div>
         </div>
