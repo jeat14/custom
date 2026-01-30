@@ -1,0 +1,6 @@
+.vercel
+package.json
+package-lock.json
+frontend/.gitignore
+zap-report.html
+zap.yaml

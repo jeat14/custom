@@ -11,16 +11,89 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [isSending, setIsSending] = useState(false)
+  const [turnstileToken, setTurnstileToken] = useState('')
   const openedRef = useRef(false)
+  const inputRef = useRef<HTMLInputElement | null>(null)
+  const previousFocusRef = useRef<HTMLElement | null>(null)
+  const turnstileRef = useRef<HTMLDivElement | null>(null)
+  const turnstileWidgetIdRef = useRef<any>(null)
+  const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined
 
   useEffect(() => {
     if (!isOpen) return
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setIsOpen(false)
+      if (e.key === 'Escape') close()
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [isOpen])
+
+  useEffect(() => {
+    if (!isOpen) return
+    previousFocusRef.current = (document.activeElement as HTMLElement | null) ?? null
+    const priorOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const t = window.setTimeout(() => inputRef.current?.focus(), 0)
+    return () => {
+      window.clearTimeout(t)
+      document.body.style.overflow = priorOverflow
+      previousFocusRef.current?.focus?.()
+    }
+  }, [isOpen])
+
+  useEffect(() => {
+    if (!isOpen) return
+    if (!siteKey) return
+    if (!turnstileRef.current) return
+
+    setTurnstileToken('')
+    let canceled = false
+
+    const render = () => {
+      const api = (window as any).turnstile
+      if (!api || canceled) return
+      if (turnstileWidgetIdRef.current != null) {
+        try {
+          api.remove(turnstileWidgetIdRef.current)
+        } catch {}
+        turnstileWidgetIdRef.current = null
+      }
+      turnstileWidgetIdRef.current = api.render(turnstileRef.current, {
+        sitekey: siteKey,
+        callback: (token: string) => setTurnstileToken(token),
+        'expired-callback': () => setTurnstileToken(''),
+        'error-callback': () => setTurnstileToken(''),
+      })
+    }
+
+    if ((window as any).turnstile) {
+      render()
+    } else {
+      const existing = document.querySelector('script[data-turnstile="true"]') as HTMLScriptElement | null
+      if (existing) {
+        existing.addEventListener('load', render, { once: true })
+      } else {
+        const s = document.createElement('script')
+        s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
+        s.async = true
+        s.defer = true
+        s.dataset.turnstile = 'true'
+        s.addEventListener('load', render, { once: true })
+        document.head.appendChild(s)
+      }
+    }
+
+    return () => {
+      canceled = true
+      const api = (window as any).turnstile
+      if (api && turnstileWidgetIdRef.current != null) {
+        try {
+          api.remove(turnstileWidgetIdRef.current)
+        } catch {}
+      }
+      turnstileWidgetIdRef.current = null
+    }
+  }, [isOpen, siteKey])
 
   useEffect(() => {
     if (session?.user?.id) return
@@ -80,32 +153,46 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
       }
       return
     }
+    if (!siteKey) {
+      if (props.contactEmail) {
+        setError(`Signup unavailable. Email us at ${props.contactEmail}.`)
+      } else {
+        setError('Signup unavailable right now.')
+      }
+      return
+    }
+    if (!turnstileToken) {
+      setError('Complete the verification check')
+      return
+    }
 
     setIsSending(true)
     try {
-      const { error } = await supabase.from('newsletter_signups').insert({
-        email: addr,
-        source: 'landing_popup',
-        path: window.location.pathname,
-        referrer: document.referrer || null,
-        user_agent: navigator.userAgent || null,
+      const { data, error } = await supabase.functions.invoke('newsletter-signup', {
+        body: {
+          email: addr,
+          token: turnstileToken,
+          source: 'landing_popup',
+          path: window.location.pathname,
+          referrer: document.referrer || null,
+          user_agent: navigator.userAgent || null,
+        },
       })
       if (error) {
-        if ((error as any).code === '42P01' || (error as any).code === '42501') {
-          if (props.contactEmail) {
-            setError(`Signup is being enabled. Email us at ${props.contactEmail}.`)
-          } else {
-            setError('Signup is being enabled. Try again shortly.')
-          }
-          return
+        const msg = error.message || 'Failed to save signup'
+        if (/404|not found/i.test(msg)) {
+          if (props.contactEmail) setError(`Signup is being enabled. Email us at ${props.contactEmail}.`)
+          else setError('Signup is being enabled. Try again shortly.')
+        } else {
+          setError(msg)
         }
-        if ((error as any).code === '23505') {
-          setMessage('You’re already on the list. Thanks.')
-          dismissForDays(365)
-          capture('newsletter_signup_duplicate', { page: window.location.pathname })
-          return
-        }
-        setError(error.message)
+        return
+      }
+
+      if ((data as any)?.duplicate) {
+        setMessage('You’re already on the list. Thanks.')
+        dismissForDays(365)
+        capture('newsletter_signup_duplicate', { page: window.location.pathname })
         return
       }
 
@@ -120,11 +207,13 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
   if (!isOpen) return null
 
   return (
-    <div className="modalOverlay" role="dialog" aria-modal="true" onMouseDown={() => close()}>
-      <div className="modalCard" onMouseDown={(e) => e.stopPropagation()}>
+    <div className="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="newsletter_title" onClick={() => close()}>
+      <div className="modalCard" onClick={(e) => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
           <div>
-            <div style={{ fontSize: 16, fontWeight: 750, letterSpacing: -0.2 }}>Get product updates</div>
+            <div id="newsletter_title" style={{ fontSize: 16, fontWeight: 750, letterSpacing: -0.2 }}>
+              Get product updates
+            </div>
             <div className="muted" style={{ marginTop: 8, fontSize: 13, lineHeight: 1.55 }}>
               No spam. Just major launches and security updates. Unsubscribe anytime.
             </div>
@@ -136,16 +225,20 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
 
         <div style={{ marginTop: 14, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <input
+            ref={inputRef}
             value={email}
             onChange={(e: any) => setEmail(e.target.value)}
             placeholder="you@domain.com"
             inputMode="email"
             autoComplete="email"
+            aria-label="Email address"
           />
           <button type="button" className="primary" onClick={() => void submit()} disabled={isSending}>
             {isSending ? 'Saving…' : 'Notify Me'}
           </button>
         </div>
+
+        {siteKey ? <div ref={turnstileRef} style={{ marginTop: 12 }} /> : null}
 
         {error ? (
           <div className="error" style={{ marginTop: 10 }}>

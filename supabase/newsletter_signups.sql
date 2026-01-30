@@ -16,15 +16,6 @@ create unique index if not exists newsletter_signups_email_normalized_key on pub
 alter table public.newsletter_signups enable row level security;
 
 drop policy if exists "newsletter_signups_anon_insert" on public.newsletter_signups;
-create policy "newsletter_signups_anon_insert"
-on public.newsletter_signups
-for insert
-to anon
-with check (
-  length(trim(email)) between 3 and 320
-  and position('@' in email) > 1
-  and position('.' in split_part(email, '@', 2)) > 1
-);
 
 drop policy if exists "newsletter_signups_admin_select" on public.newsletter_signups;
 create policy "newsletter_signups_admin_select"
@@ -32,4 +23,3 @@ on public.newsletter_signups
 for select
 to authenticated
 using (public.is_admin());
-

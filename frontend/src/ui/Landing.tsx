@@ -34,7 +34,7 @@ export function Landing() {
           <Link to="/pricing" style={{ textDecoration: 'none' }}>
             <button type="button">View Pricing</button>
           </Link>
-          <Link to="/security-audit" style={{ textDecoration: 'none' }}>
+          <Link to="/security" style={{ textDecoration: 'none' }}>
             <button type="button">Security Audit</button>
           </Link>
           <Link to="/terms" style={{ textDecoration: 'none' }}>

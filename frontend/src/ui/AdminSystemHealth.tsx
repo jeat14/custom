@@ -83,6 +83,7 @@ export function AdminSystemHealth() {
           </div>
           <div style={{ display: 'flex', gap: 10 }}>
             <Link to="/admin/pending-verifications">Pending Verifications</Link>
+            <Link to="/admin/newsletter">Newsletter</Link>
             <span className="pill" style={{ fontSize: 12 }}>
               Health
             </span>

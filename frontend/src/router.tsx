@@ -1,5 +1,6 @@
 import { Navigate, createBrowserRouter } from 'react-router-dom'
 import { AppLayout } from './ui/AppLayout'
+import { AdminNewsletter } from './ui/AdminNewsletter'
 import { AdminPendingVerifications } from './ui/AdminPendingVerifications'
 import { AdminSystemHealth } from './ui/AdminSystemHealth'
 import { HeirHandover } from './ui/HeirHandover'
@@ -31,6 +32,7 @@ export const router = createBrowserRouter([
       { path: 'support', element: <Support /> },
       { path: 'admin/pending-verifications', element: <RequireAdmin><AdminPendingVerifications /></RequireAdmin> },
       { path: 'admin/system-health', element: <RequireAdmin><AdminSystemHealth /></RequireAdmin> },
+      { path: 'admin/newsletter', element: <RequireAdmin><AdminNewsletter /></RequireAdmin> },
     ],
   },
 ])

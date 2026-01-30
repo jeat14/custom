@@ -245,6 +245,7 @@ export function AdminPendingVerifications() {
               Pending Verifications
             </span>
             <Link to="/admin/system-health">System Health</Link>
+            <Link to="/admin/newsletter">Newsletter</Link>
             <Link to="/support">Support</Link>
             <button type="button" onClick={() => void refresh()} disabled={isSubmitting}>
               Refresh

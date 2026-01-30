@@ -61,6 +61,8 @@ export function AppLayout() {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 10,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -81,10 +83,10 @@ export function AppLayout() {
             </Link>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             {session?.user?.email ? (
               <>
-                <span className="pill" style={{ fontSize: 12 }}>
+                <span className="pill" style={{ fontSize: 12, maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {session.user.email}
                 </span>
                 {isAdmin ? (
@@ -115,7 +117,9 @@ export function AppLayout() {
           padding: 16,
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center',
+          alignItems: 'flex-start',
+          flexWrap: 'wrap',
+          gap: 12,
           fontSize: 13,
           color: 'var(--muted)',
         }}
@@ -128,7 +132,7 @@ export function AppLayout() {
             </a>
           ) : null}
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           <Link to="/security">Security Audit</Link>
           <Link to="/heir">Heir Handover</Link>
           <Link to="/pricing">Pricing</Link>
