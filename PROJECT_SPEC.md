@@ -30,6 +30,15 @@
 - Security headers:
   - CSP must allow Turnstile (`https://challenges.cloudflare.com`) in `script-src`, `frame-src`, and `connect-src`.
 
+## Email Receiving (Resend Inbound)
+- Resend can receive emails via a Resend-managed inbound address (`<anything>@<id>.resend.app`) or a custom domain (MX records).
+- Configure a Resend webhook for `email.received` pointing at Supabase Edge Function `resend-inbound-email`.
+- Webhook security:
+  - Verify Svix signature headers using `RESEND_WEBHOOK_SECRET` (Supabase Edge Function secret).
+- Storage:
+  - Received emails are fetched via Resend Receiving API and stored in `public.support_inbox_emails`.
+  - RLS allows admin-only reads/updates/deletes (`public.is_admin()`).
+
 ## Branding / Icons
 - Ensure favicon and touch icons are present and correctly served:
   - `favicon.ico`, `favicon-48x48.png`, `apple-touch-icon.png`, Android icons, and `site.webmanifest`.
