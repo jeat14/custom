@@ -17,9 +17,18 @@
 ## Newsletter / Lead Capture
 - Landing page uses a newsletter popup to capture emails before visitors leave.
 - Emails are stored in Supabase `public.newsletter_signups`.
-- RLS:
-  - Allow anonymous inserts only.
+- Anti-spam:
+  - Use Cloudflare Turnstile on the client.
+  - Submit via Supabase Edge Function `newsletter-signup` (server-side insert using service role).
+  - Do not allow direct anon inserts into `public.newsletter_signups` (drop the anon insert policy).
+- Required secrets / env:
+  - Vercel: `VITE_TURNSTILE_SITE_KEY`
+  - Supabase Functions secret: `TURNSTILE_SECRET_KEY`
+- Admin operations:
+  - Provide an admin-only Newsletter page (`/admin/newsletter`) with Copy/Download CSV.
   - Allow reads only for admins (`public.is_admin()`).
+- Security headers:
+  - CSP must allow Turnstile (`https://challenges.cloudflare.com`) in `script-src`, `frame-src`, and `connect-src`.
 
 ## Branding / Icons
 - Ensure favicon and touch icons are present and correctly served:
@@ -29,4 +38,3 @@
 - Never commit secrets (keys/tokens) or log sensitive data.
 - Prefer smallest changes that match existing code style (inline styles are used widely in UI).
 - Verify changes with a production build before deploy.
-
