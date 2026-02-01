@@ -90,7 +90,8 @@ export function HowItWorks() {
   const navigate = useNavigate()
   const demoVideoSrc = '/how-it-works-demo.mp4'
   const demoVideoRef = useRef<HTMLVideoElement | null>(null)
-  const [muted, setMuted] = useState(true)
+  const userEnabledSoundRef = useRef(false)
+  const [isMuted, setIsMuted] = useState(true)
 
   useEffect(() => {
     const el = demoVideoRef.current
@@ -100,6 +101,12 @@ export function HowItWorks() {
       (entries) => {
         const isVisible = entries.some((e) => e.isIntersecting)
         if (isVisible) {
+          if (!userEnabledSoundRef.current) {
+            el.muted = true
+            setIsMuted(true)
+          } else {
+            setIsMuted(Boolean(el.muted))
+          }
           void el.play().catch(() => {})
           return
         }
@@ -363,12 +370,18 @@ export function HowItWorks() {
 
           <div style={{ marginTop: 12, position: 'relative' }}>
             <video
-              muted={muted}
+              muted={isMuted}
               loop
               controls
               playsInline
               preload="metadata"
               ref={demoVideoRef}
+              onVolumeChange={(e) => {
+                const el = e.currentTarget
+                const nowMuted = Boolean(el.muted) || el.volume === 0
+                setIsMuted(nowMuted)
+                if (!nowMuted) userEnabledSoundRef.current = true
+              }}
               style={{
                 width: '100%',
                 borderRadius: 18,
@@ -379,29 +392,36 @@ export function HowItWorks() {
             >
               <source src={demoVideoSrc} type="video/mp4" />
             </video>
-            {muted ? (
-              <button
-                type="button"
-                onClick={() => {
-                  const el = demoVideoRef.current
-                  if (!el) return
+            <button
+              type="button"
+              onClick={() => {
+                const el = demoVideoRef.current
+                if (!el) return
+                if (el.muted || el.volume === 0) {
                   el.muted = false
-                  setMuted(false)
+                  if (el.volume === 0) el.volume = 1
+                  userEnabledSoundRef.current = true
+                  setIsMuted(false)
                   void el.play().catch(() => {})
-                }}
-                className="pill"
-                style={{
-                  position: 'absolute',
-                  right: 10,
-                  bottom: 10,
-                  padding: '8px 10px',
-                  fontSize: 12,
-                  boxShadow: 'var(--shadow-soft)',
-                }}
-              >
-                Unmute
-              </button>
-            ) : null}
+                  return
+                }
+                el.muted = true
+                userEnabledSoundRef.current = false
+                setIsMuted(true)
+              }}
+              className="pill"
+              style={{
+                position: 'absolute',
+                right: 10,
+                top: 10,
+                padding: '8px 10px',
+                fontSize: 12,
+                boxShadow: 'var(--shadow-soft)',
+                zIndex: 3,
+              }}
+            >
+              {isMuted ? 'Sound: Off' : 'Sound: On'}
+            </button>
           </div>
 
           <div className="muted" style={{ marginTop: 10, fontSize: 12, lineHeight: 1.6 }}>
