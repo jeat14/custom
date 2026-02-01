@@ -86,6 +86,7 @@ function DemoPanel(props: { title: string; children: React.ReactNode }) {
 
 export function HowItWorks() {
   const navigate = useNavigate()
+  const demoVideoSrc = '/how-it-works-demo.mp4'
 
   return (
     <div style={{ padding: 24, maxWidth: 980, margin: '0 auto' }}>
@@ -320,6 +321,45 @@ export function HowItWorks() {
                 </div>
               </div>
             </DemoPanel>
+          </div>
+        </div>
+
+        <div className="card" style={{ padding: 18 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 850, letterSpacing: -0.2 }}>10-second demo</div>
+              <div className="muted" style={{ marginTop: 8, lineHeight: 1.65, fontSize: 13 }}>
+                A quick walkthrough of the experience.
+              </div>
+            </div>
+            <span className="pill" style={{ fontSize: 12 }}>
+              Video
+            </span>
+          </div>
+
+          <div style={{ marginTop: 12 }}>
+            <video
+              controls
+              playsInline
+              preload="metadata"
+              style={{
+                width: '100%',
+                borderRadius: 18,
+                border: '1px solid rgba(31, 41, 55, 0.12)',
+                background: 'rgba(17, 24, 39, 0.06)',
+                boxShadow: '0 18px 46px rgba(17, 24, 39, 0.10)',
+              }}
+            >
+              <source src={demoVideoSrc} type="video/mp4" />
+            </video>
+          </div>
+
+          <div className="muted" style={{ marginTop: 10, fontSize: 12, lineHeight: 1.6 }}>
+            If the video doesn’t play,{' '}
+            <a href={demoVideoSrc} target="_blank" rel="noreferrer">
+              open it in a new tab
+            </a>
+            .
           </div>
         </div>
 
