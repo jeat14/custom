@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 function ShieldIcon(props: { tone?: 'ok' | 'warn' }) {
@@ -72,6 +72,7 @@ function DemoPanel(props: { title: string; children: React.ReactNode }) {
         border: '1px solid rgba(31, 41, 55, 0.10)',
         background: 'rgba(255, 255, 255, 0.82)',
         boxShadow: '0 18px 46px rgba(17, 24, 39, 0.10)',
+        backdropFilter: 'none',
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
@@ -89,6 +90,7 @@ export function HowItWorks() {
   const navigate = useNavigate()
   const demoVideoSrc = '/how-it-works-demo.mp4'
   const demoVideoRef = useRef<HTMLVideoElement | null>(null)
+  const [muted, setMuted] = useState(true)
 
   useEffect(() => {
     const el = demoVideoRef.current
@@ -112,7 +114,7 @@ export function HowItWorks() {
 
   return (
     <div style={{ padding: 24, maxWidth: 980, margin: '0 auto' }}>
-      <div className="card" style={{ padding: 22 }}>
+      <div className="card" style={{ padding: 22, backdropFilter: 'none' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
           <h1 style={{ margin: 0, letterSpacing: -0.4 }}>How it works</h1>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -135,7 +137,7 @@ export function HowItWorks() {
       </div>
 
       <div style={{ marginTop: 16, display: 'grid', gap: 12 }}>
-        <div className="card" style={{ padding: 18 }}>
+        <div className="card" style={{ padding: 18, backdropFilter: 'none' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 14 }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 14 }}>
               <div>
@@ -215,7 +217,7 @@ export function HowItWorks() {
           </div>
         </div>
 
-        <div className="card" style={{ padding: 18 }}>
+        <div className="card" style={{ padding: 18, backdropFilter: 'none' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 14 }}>
             <div>
               <div className="pill" style={{ fontSize: 12 }}>
@@ -282,7 +284,7 @@ export function HowItWorks() {
           </div>
         </div>
 
-        <div className="card" style={{ padding: 18 }}>
+        <div className="card" style={{ padding: 18, backdropFilter: 'none' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 14 }}>
             <div>
               <div className="pill" style={{ fontSize: 12 }}>
@@ -359,13 +361,13 @@ export function HowItWorks() {
             </span>
           </div>
 
-          <div style={{ marginTop: 12 }}>
+          <div style={{ marginTop: 12, position: 'relative' }}>
             <video
-              muted
+              muted={muted}
               loop
               controls
               playsInline
-              preload="none"
+              preload="metadata"
               ref={demoVideoRef}
               style={{
                 width: '100%',
@@ -377,6 +379,29 @@ export function HowItWorks() {
             >
               <source src={demoVideoSrc} type="video/mp4" />
             </video>
+            {muted ? (
+              <button
+                type="button"
+                onClick={() => {
+                  const el = demoVideoRef.current
+                  if (!el) return
+                  el.muted = false
+                  setMuted(false)
+                  void el.play().catch(() => {})
+                }}
+                className="pill"
+                style={{
+                  position: 'absolute',
+                  right: 10,
+                  bottom: 10,
+                  padding: '8px 10px',
+                  fontSize: 12,
+                  boxShadow: 'var(--shadow-soft)',
+                }}
+              >
+                Unmute
+              </button>
+            ) : null}
           </div>
 
           <div className="muted" style={{ marginTop: 10, fontSize: 12, lineHeight: 1.6 }}>
@@ -388,7 +413,7 @@ export function HowItWorks() {
           </div>
         </div>
 
-        <div className="card" style={{ padding: 18 }}>
+        <div className="card" style={{ padding: 18, backdropFilter: 'none' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
             <div style={{ fontSize: 18, fontWeight: 850, letterSpacing: -0.2 }}>Your recovery kit</div>
             <span className="pill" style={{ fontSize: 12 }}>
@@ -415,7 +440,7 @@ export function HowItWorks() {
           </div>
         </div>
 
-        <div className="card" style={{ padding: 18 }}>
+        <div className="card" style={{ padding: 18, backdropFilter: 'none' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
             <div>
               <div style={{ fontSize: 18, fontWeight: 850, letterSpacing: -0.2 }}>Get set up in minutes</div>

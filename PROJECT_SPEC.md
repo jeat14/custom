@@ -20,6 +20,7 @@
   - Heir handover (verification before access).
 - Emphasize recovery kit constraints: store offline; Evernest cannot reset the Vault Password.
 - Autoplay note: browsers only allow autoplay when the video is muted; users can unmute via controls.
+- Audio note: the page shows an explicit Unmute control so users can enable sound after interaction.
 
 ## Admin Access Rules
 - Never expose admin routes via public/global navigation.
