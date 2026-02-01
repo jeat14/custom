@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 function ShieldIcon(props: { tone?: 'ok' | 'warn' }) {
@@ -87,6 +88,27 @@ function DemoPanel(props: { title: string; children: React.ReactNode }) {
 export function HowItWorks() {
   const navigate = useNavigate()
   const demoVideoSrc = '/how-it-works-demo.mp4'
+  const demoVideoRef = useRef<HTMLVideoElement | null>(null)
+
+  useEffect(() => {
+    const el = demoVideoRef.current
+    if (!el) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const isVisible = entries.some((e) => e.isIntersecting)
+        if (isVisible) {
+          void el.play().catch(() => {})
+          return
+        }
+        el.pause()
+      },
+      { threshold: 0.35 }
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
 
   return (
     <div style={{ padding: 24, maxWidth: 980, margin: '0 auto' }}>
@@ -324,7 +346,7 @@ export function HowItWorks() {
           </div>
         </div>
 
-        <div className="card" style={{ padding: 18 }}>
+        <div className="card" style={{ padding: 18, backdropFilter: 'none' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
             <div>
               <div style={{ fontSize: 18, fontWeight: 850, letterSpacing: -0.2 }}>10-second demo</div>
@@ -339,12 +361,12 @@ export function HowItWorks() {
 
           <div style={{ marginTop: 12 }}>
             <video
-              autoPlay
               muted
               loop
               controls
               playsInline
-              preload="metadata"
+              preload="none"
+              ref={demoVideoRef}
               style={{
                 width: '100%',
                 borderRadius: 18,
