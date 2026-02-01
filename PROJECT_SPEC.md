@@ -9,6 +9,15 @@
 - Keep trust-building links visible, but avoid duplicate primary CTAs (one “primary” version, others secondary).
 - Keep wording calm, minimal, and reassuring; prefer short, clear sentences.
 
+## Launch Priorities (Day 7)
+- Prioritize clarity over complexity: ship a simple “How it works” narrative page.
+- Prefer real UI visuals over stock: use screenshots or UI previews to prove the product works.
+- Keep steps benefit-driven:
+  - Secure your legacy (store what matters, encrypted).
+  - Duty-of-care guard (safe check-in logic, no instant compromise).
+  - Heir handover (verification before access).
+- Emphasize recovery kit constraints: store offline; Evernest cannot reset the Vault Password.
+
 ## Admin Access Rules
 - Never expose admin routes via public/global navigation.
 - Admin entry points may appear only when the user is confirmed admin (via `rpc('is_admin')`), e.g. an “Admin” button next to the signed-in email.
