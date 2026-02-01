@@ -110,7 +110,7 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
       capture('newsletter_popup_opened', { reason, page: window.location.pathname })
     }
 
-    const timer = window.setTimeout(() => openOnce('delay'), 9000)
+    const timer = window.setTimeout(() => openOnce('delay'), 10000)
     const onMouseOut = (e: MouseEvent) => {
       const nearTop = typeof e.clientY === 'number' && e.clientY <= 0
       if (nearTop) openOnce('exit_intent')

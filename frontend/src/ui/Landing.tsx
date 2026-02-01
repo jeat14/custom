@@ -42,7 +42,6 @@ export function Landing() {
           <div style={{ marginTop: 12, position: 'relative' }}>
             <video
               muted={isMuted}
-              loop
               controls
               playsInline
               preload="metadata"
@@ -52,6 +51,11 @@ export function Landing() {
                 const nowMuted = Boolean(el.muted) || el.volume === 0
                 setIsMuted(nowMuted)
                 if (!nowMuted) userEnabledSoundRef.current = true
+              }}
+              onEnded={() => {
+                const el = demoVideoRef.current
+                if (!el) return
+                el.pause()
               }}
               style={{
                 width: '100%',
