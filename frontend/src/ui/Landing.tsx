@@ -11,6 +11,7 @@ export function Landing() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
           <h1 style={{ margin: 0, letterSpacing: -0.4 }}>Evernest</h1>
           <div style={{ display: 'flex', gap: 12, fontSize: 13, alignItems: 'center', flexWrap: 'wrap' }}>
+            <Link to="/how-it-works">How it works</Link>
             <Link to="/pricing">Pricing</Link>
             <Link to="/support">Support</Link>
           </div>
@@ -30,6 +31,9 @@ export function Landing() {
             <button type="button" className="primary">
               Sign In
             </button>
+          </Link>
+          <Link to="/how-it-works" style={{ textDecoration: 'none' }}>
+            <button type="button">How it works</button>
           </Link>
           <Link to="/pricing" style={{ textDecoration: 'none' }}>
             <button type="button">View Pricing</button>

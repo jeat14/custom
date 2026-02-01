@@ -17,3 +17,10 @@ zap-report.html
 zap*.yaml
 
 .supabase/
+.vercel/
+frontend/supabase.tar.gz
+/package.json
+/package-lock.json
+frontend/.gitignore
+frontend/LICENSE
+frontend/README.md

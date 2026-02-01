@@ -133,6 +133,7 @@ export function AppLayout() {
           ) : null}
         </div>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          <Link to="/how-it-works">How it works</Link>
           <Link to="/security">Security Audit</Link>
           <Link to="/heir">Heir Handover</Link>
           <Link to="/pricing">Pricing</Link>

@@ -4,6 +4,7 @@ import { AdminNewsletter } from './ui/AdminNewsletter'
 import { AdminPendingVerifications } from './ui/AdminPendingVerifications'
 import { AdminSystemHealth } from './ui/AdminSystemHealth'
 import { HeirHandover } from './ui/HeirHandover'
+import { HowItWorks } from './ui/HowItWorks'
 import { Landing } from './ui/Landing'
 import { Login } from './ui/Login'
 import { RequireAuth } from './ui/RequireAuth'
@@ -26,6 +27,7 @@ export const router = createBrowserRouter([
       { path: 'heir', element: <RequireAuth><HeirHandover /></RequireAuth> },
       { path: 'security', element: <Security /> },
       { path: 'security-audit', element: <Navigate to="/security" replace /> },
+      { path: 'how-it-works', element: <HowItWorks /> },
       { path: 'pricing', element: <Pricing /> },
       { path: 'terms', element: <Terms /> },
       { path: 'privacy', element: <Privacy /> },
