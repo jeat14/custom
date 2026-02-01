@@ -119,11 +119,13 @@ export function HowItWorks() {
   }, [])
 
   return (
-    <div style={{ padding: 24, maxWidth: 980, margin: '0 auto' }}>
-      <div className="card" style={{ padding: 22, backdropFilter: 'none' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
-          <h1 style={{ margin: 0, letterSpacing: -0.4 }}>How it works</h1>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+    <div className="hiwPage">
+      <div className="card hiwHero">
+        <div className="hiwHeaderRow">
+          <h1 className="hiwTitle" style={{ margin: 0, letterSpacing: -0.4 }}>
+            How it works
+          </h1>
+          <div className="hiwHeaderActions">
             <Link to="/security" style={{ opacity: 0.85 }}>
               Security details
             </Link>
@@ -142,10 +144,9 @@ export function HowItWorks() {
         </div>
       </div>
 
-      <div style={{ marginTop: 16, display: 'grid', gap: 12 }}>
-        <div className="card" style={{ padding: 18, backdropFilter: 'none' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 14 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 14 }}>
+      <div className="hiwStack">
+        <div className="card hiwCard">
+          <div className="hiwTwoCol">
               <div>
                 <div className="pill" style={{ fontSize: 12 }}>
                   Step 1
@@ -155,7 +156,7 @@ export function HowItWorks() {
                   Add the accounts, documents, and instructions your family would struggle to find. Everything is encrypted before it leaves
                   your browser.
                 </div>
-                <div style={{ marginTop: 12, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <div className="hiwBadges">
                   <SecurityBadge label="Zero-knowledge" detail="Your password never leaves your device" />
                   <SecurityBadge label="AES-256" detail="AES-GCM encryption for stored vault entries" />
                   <SecurityBadge label="Client-side crypto" detail="Encrypt before upload, decrypt locally" />
@@ -175,7 +176,7 @@ export function HowItWorks() {
 
               <DemoPanel title="Vault entry">
                 <div style={{ display: 'grid', gap: 10 }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div className="hiwDemoTwoCol">
                     <div>
                       <div className="muted" style={{ fontSize: 12 }}>
                         Label
@@ -219,12 +220,11 @@ export function HowItWorks() {
                   </div>
                 </div>
               </DemoPanel>
-            </div>
           </div>
         </div>
 
-        <div className="card" style={{ padding: 18, backdropFilter: 'none' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 14 }}>
+        <div className="card hiwCard">
+          <div className="hiwTwoCol">
             <div>
               <div className="pill" style={{ fontSize: 12 }}>
                 Step 2
@@ -290,8 +290,8 @@ export function HowItWorks() {
           </div>
         </div>
 
-        <div className="card" style={{ padding: 18, backdropFilter: 'none' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 14 }}>
+        <div className="card hiwCard">
+          <div className="hiwTwoCol">
             <div>
               <div className="pill" style={{ fontSize: 12 }}>
                 Step 3
@@ -354,7 +354,7 @@ export function HowItWorks() {
           </div>
         </div>
 
-        <div className="card" style={{ padding: 18, backdropFilter: 'none' }}>
+        <div className="card hiwCard">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
             <div>
               <div style={{ fontSize: 18, fontWeight: 850, letterSpacing: -0.2 }}>10-second demo</div>
@@ -433,7 +433,7 @@ export function HowItWorks() {
           </div>
         </div>
 
-        <div className="card" style={{ padding: 18, backdropFilter: 'none' }}>
+        <div className="card hiwCard">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
             <div style={{ fontSize: 18, fontWeight: 850, letterSpacing: -0.2 }}>Your recovery kit</div>
             <span className="pill" style={{ fontSize: 12 }}>
@@ -460,7 +460,7 @@ export function HowItWorks() {
           </div>
         </div>
 
-        <div className="card" style={{ padding: 18, backdropFilter: 'none' }}>
+        <div className="card hiwCard">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
             <div>
               <div style={{ fontSize: 18, fontWeight: 850, letterSpacing: -0.2 }}>Get set up in minutes</div>
@@ -468,7 +468,7 @@ export function HowItWorks() {
                 Start small: add one account, generate your recovery kit, and invite your heir.
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <div className="hiwFooterActions">
               <Link to="/pricing" style={{ textDecoration: 'none' }}>
                 <button type="button">View Pricing</button>
               </Link>

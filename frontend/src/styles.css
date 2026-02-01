@@ -160,6 +160,118 @@ textarea:focus {
   background: rgba(201, 163, 91, 0.12);
 }
 
+.hiwPage {
+  padding: 24px;
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.hiwHero {
+  padding: 22px;
+  backdrop-filter: none;
+}
+
+.hiwCard {
+  padding: 18px;
+  backdrop-filter: none;
+}
+
+.hiwStack {
+  margin-top: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.hiwHeaderRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.hiwTitle {
+  font-size: 32px;
+  line-height: 1.1;
+}
+
+.hiwHeaderActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.hiwTwoCol {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.hiwDemoTwoCol {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.hiwBadges {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.hiwFooterActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 720px) {
+  .hiwPage {
+    padding: 16px;
+  }
+
+  .hiwHero {
+    padding: 18px;
+  }
+
+  .hiwCard {
+    padding: 16px;
+  }
+
+  .hiwTitle {
+    font-size: 26px;
+  }
+
+  .hiwTwoCol {
+    grid-template-columns: 1fr;
+  }
+
+  .hiwDemoTwoCol {
+    grid-template-columns: 1fr;
+  }
+
+  .hiwBadges {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .hiwBadges > .pill {
+    width: 100%;
+  }
+
+  .hiwFooterActions {
+    width: 100%;
+  }
+
+  .hiwFooterActions > a,
+  .hiwFooterActions > button {
+    width: 100%;
+  }
+}
+
 .modalOverlay {
   position: fixed;
   inset: 0;
