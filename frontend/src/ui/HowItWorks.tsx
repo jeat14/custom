@@ -397,8 +397,9 @@ export function HowItWorks() {
                 const el = demoVideoRef.current
                 if (!el) return
                 if (el.muted || el.volume === 0) {
+                  el.pause()
                   el.muted = false
-                  if (el.volume === 0) el.volume = 1
+                  el.volume = 1
                   userEnabledSoundRef.current = true
                   setIsMuted(false)
                   void el.play().catch(() => {})
