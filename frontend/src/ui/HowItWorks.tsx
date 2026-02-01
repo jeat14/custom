@@ -1,5 +1,66 @@
 import { Link, useNavigate } from 'react-router-dom'
 
+function ShieldIcon(props: { tone?: 'ok' | 'warn' }) {
+  const tone = props.tone ?? 'ok'
+  const fill = tone === 'warn' ? 'rgba(201, 163, 91, 0.22)' : 'rgba(31, 61, 43, 0.18)'
+  const stroke = tone === 'warn' ? 'rgba(201, 163, 91, 0.55)' : 'rgba(31, 61, 43, 0.55)'
+  return (
+    <span
+      aria-hidden="true"
+      style={{
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: fill,
+        border: `1px solid ${stroke}`,
+        flex: '0 0 auto',
+      }}
+    >
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+        <path
+          d="M12 2l7 4v6c0 5-3.5 9.5-7 10-3.5-.5-7-5-7-10V6l7-4z"
+          stroke={tone === 'warn' ? 'rgba(201, 163, 91, 0.95)' : 'rgba(31, 61, 43, 0.95)'}
+          strokeWidth="2"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M8 12l2.3 2.3L16 8.6"
+          stroke={tone === 'warn' ? 'rgba(201, 163, 91, 0.95)' : 'rgba(31, 61, 43, 0.95)'}
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </span>
+  )
+}
+
+function SecurityBadge(props: { label: string; detail: string; tone?: 'ok' | 'warn' }) {
+  return (
+    <span
+      className="pill"
+      style={{
+        fontSize: 12,
+        gap: 10,
+        padding: '8px 10px',
+        borderColor: 'rgba(31, 41, 55, 0.12)',
+        background: 'rgba(255, 255, 255, 0.8)',
+      }}
+    >
+      <ShieldIcon tone={props.tone} />
+      <span style={{ display: 'grid', lineHeight: 1.2 }}>
+        <span style={{ fontWeight: 800, letterSpacing: -0.1 }}>{props.label}</span>
+        <span className="muted" style={{ fontSize: 12 }}>
+          {props.detail}
+        </span>
+      </span>
+    </span>
+  )
+}
+
 function DemoPanel(props: { title: string; children: React.ReactNode }) {
   return (
     <div
@@ -62,6 +123,11 @@ export function HowItWorks() {
                 <div className="muted" style={{ marginTop: 8, lineHeight: 1.7, fontSize: 13 }}>
                   Add the accounts, documents, and instructions your family would struggle to find. Everything is encrypted before it leaves
                   your browser.
+                </div>
+                <div style={{ marginTop: 12, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  <SecurityBadge label="Zero-knowledge" detail="Your password never leaves your device" />
+                  <SecurityBadge label="AES-256" detail="AES-GCM encryption for stored vault entries" />
+                  <SecurityBadge label="Client-side crypto" detail="Encrypt before upload, decrypt locally" />
                 </div>
                 <div style={{ marginTop: 12, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                   <span className="pill" style={{ fontSize: 12 }}>
@@ -310,4 +376,3 @@ export function HowItWorks() {
     </div>
   )
 }
-
