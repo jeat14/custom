@@ -99,20 +99,19 @@ export function HowItWorks() {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        const isVisible = entries.some((e) => e.isIntersecting)
+        const entry = entries[0]
+        const isVisible = Boolean(entry?.isIntersecting)
         if (isVisible) {
           if (!userEnabledSoundRef.current) {
             el.muted = true
             setIsMuted(true)
-          } else {
-            setIsMuted(Boolean(el.muted))
           }
           void el.play().catch(() => {})
           return
         }
-        el.pause()
+        if (!userEnabledSoundRef.current) el.pause()
       },
-      { threshold: 0.35 }
+      { threshold: 0.05, rootMargin: '200px 0px' }
     )
 
     observer.observe(el)
