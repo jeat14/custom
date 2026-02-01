@@ -40,6 +40,6 @@
     { "source": "/android-chrome-192x192.png", "destination": "/android-chrome-192x192.png" },
     { "source": "/android-chrome-512x512.png", "destination": "/android-chrome-512x512.png" },
     { "source": "/site.webmanifest", "destination": "/site.webmanifest" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/((?!.*\\.).*)", "destination": "/index.html" }
   ]
 }
