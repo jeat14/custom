@@ -1,4 +1,3 @@
-import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 function ShieldIcon(props: { tone?: 'ok' | 'warn' }) {
@@ -88,35 +87,6 @@ function DemoPanel(props: { title: string; children: React.ReactNode }) {
 
 export function HowItWorks() {
   const navigate = useNavigate()
-  const demoVideoSrc = '/how-it-works-demo.mp4'
-  const demoVideoRef = useRef<HTMLVideoElement | null>(null)
-  const userEnabledSoundRef = useRef(false)
-  const [isMuted, setIsMuted] = useState(true)
-
-  useEffect(() => {
-    const el = demoVideoRef.current
-    if (!el) return
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0]
-        const isVisible = Boolean(entry?.isIntersecting)
-        if (isVisible) {
-          if (!userEnabledSoundRef.current) {
-            el.muted = true
-            setIsMuted(true)
-          }
-          void el.play().catch(() => {})
-          return
-        }
-        if (!userEnabledSoundRef.current) el.pause()
-      },
-      { threshold: 0.05, rootMargin: '200px 0px' }
-    )
-
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
 
   return (
     <div className="hiwPage">
@@ -351,85 +321,6 @@ export function HowItWorks() {
                 </div>
               </div>
             </DemoPanel>
-          </div>
-        </div>
-
-        <div className="card hiwCard">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
-            <div>
-              <div style={{ fontSize: 18, fontWeight: 850, letterSpacing: -0.2 }}>10-second demo</div>
-              <div className="muted" style={{ marginTop: 8, lineHeight: 1.65, fontSize: 13 }}>
-                A quick walkthrough of the experience.
-              </div>
-            </div>
-            <span className="pill" style={{ fontSize: 12 }}>
-              Video
-            </span>
-          </div>
-
-          <div style={{ marginTop: 12, position: 'relative' }}>
-            <video
-              muted={isMuted}
-              loop
-              controls
-              playsInline
-              preload="metadata"
-              ref={demoVideoRef}
-              onVolumeChange={(e) => {
-                const el = e.currentTarget
-                const nowMuted = Boolean(el.muted) || el.volume === 0
-                setIsMuted(nowMuted)
-                if (!nowMuted) userEnabledSoundRef.current = true
-              }}
-              style={{
-                width: '100%',
-                borderRadius: 18,
-                border: '1px solid rgba(31, 41, 55, 0.12)',
-                background: 'rgba(17, 24, 39, 0.06)',
-                boxShadow: '0 18px 46px rgba(17, 24, 39, 0.10)',
-              }}
-            >
-              <source src={demoVideoSrc} type="video/mp4" />
-            </video>
-            <button
-              type="button"
-              onClick={() => {
-                const el = demoVideoRef.current
-                if (!el) return
-                if (el.muted || el.volume === 0) {
-                  el.pause()
-                  el.muted = false
-                  el.volume = 1
-                  userEnabledSoundRef.current = true
-                  setIsMuted(false)
-                  void el.play().catch(() => {})
-                  return
-                }
-                el.muted = true
-                userEnabledSoundRef.current = false
-                setIsMuted(true)
-              }}
-              className="pill"
-              style={{
-                position: 'absolute',
-                right: 10,
-                top: 10,
-                padding: '8px 10px',
-                fontSize: 12,
-                boxShadow: 'var(--shadow-soft)',
-                zIndex: 3,
-              }}
-            >
-              {isMuted ? 'Sound: Off' : 'Sound: On'}
-            </button>
-          </div>
-
-          <div className="muted" style={{ marginTop: 10, fontSize: 12, lineHeight: 1.6 }}>
-            If the video doesn’t play,{' '}
-            <a href={demoVideoSrc} target="_blank" rel="noreferrer">
-              open it in a new tab
-            </a>
-            .
           </div>
         </div>
 
