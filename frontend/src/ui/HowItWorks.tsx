@@ -339,6 +339,9 @@ export function HowItWorks() {
 
           <div style={{ marginTop: 12 }}>
             <video
+              autoPlay
+              muted
+              loop
               controls
               playsInline
               preload="metadata"

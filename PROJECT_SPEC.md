@@ -19,6 +19,7 @@
   - Duty-of-care guard (safe check-in logic, no instant compromise).
   - Heir handover (verification before access).
 - Emphasize recovery kit constraints: store offline; Evernest cannot reset the Vault Password.
+- Autoplay note: browsers only allow autoplay when the video is muted; users can unmute via controls.
 
 ## Admin Access Rules
 - Never expose admin routes via public/global navigation.
