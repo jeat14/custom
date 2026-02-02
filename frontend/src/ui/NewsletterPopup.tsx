@@ -12,6 +12,7 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
   const [message, setMessage] = useState<string | null>(null)
   const [isSending, setIsSending] = useState(false)
   const [turnstileToken, setTurnstileToken] = useState('')
+  const [showTurnstile, setShowTurnstile] = useState(false)
   const openedRef = useRef(false)
   const sessionOpenedKey = 'evernest_newsletter_opened_session'
   const inputRef = useRef<HTMLInputElement | null>(null)
@@ -44,10 +45,16 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
 
   useEffect(() => {
     if (!isOpen) return
+    setShowTurnstile(false)
+    setTurnstileToken('')
+  }, [isOpen])
+
+  useEffect(() => {
+    if (!isOpen) return
+    if (!showTurnstile) return
     if (!siteKey) return
     if (!turnstileRef.current) return
 
-    setTurnstileToken('')
     let canceled = false
 
     const render = () => {
@@ -61,6 +68,8 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
       }
       turnstileWidgetIdRef.current = api.render(turnstileRef.current, {
         sitekey: siteKey,
+        size: 'compact',
+        appearance: 'interaction-only',
         callback: (token: string) => setTurnstileToken(token),
         'expired-callback': () => setTurnstileToken(''),
         'error-callback': () => setTurnstileToken(''),
@@ -94,7 +103,7 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
       }
       turnstileWidgetIdRef.current = null
     }
-  }, [isOpen, siteKey])
+  }, [isOpen, showTurnstile, siteKey])
 
   useEffect(() => {
     if (session?.user?.id) return
@@ -187,6 +196,7 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
       return
     }
     if (!turnstileToken) {
+      setShowTurnstile(true)
       setError('Complete the verification check')
       return
     }
@@ -263,7 +273,9 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
           </button>
         </div>
 
-        {siteKey ? <div ref={turnstileRef} style={{ marginTop: 12 }} /> : null}
+        {siteKey && (showTurnstile || Boolean(turnstileToken)) ? (
+          <div ref={turnstileRef} style={{ marginTop: 12, opacity: 0.88, transform: 'scale(0.94)', transformOrigin: '0 0' }} />
+        ) : null}
 
         {error ? (
           <div className="error" style={{ marginTop: 10 }}>
