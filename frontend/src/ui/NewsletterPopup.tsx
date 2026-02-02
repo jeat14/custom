@@ -11,6 +11,7 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [showGuideLink, setShowGuideLink] = useState(false)
+  const [debugDetails, setDebugDetails] = useState<string | null>(null)
   const [isSending, setIsSending] = useState(false)
   const [turnstileToken, setTurnstileToken] = useState('')
   const [showTurnstile, setShowTurnstile] = useState(false)
@@ -49,6 +50,7 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
     setShowTurnstile(false)
     setTurnstileToken('')
     setShowGuideLink(false)
+    setDebugDetails(null)
   }, [isOpen])
 
   useEffect(() => {
@@ -233,17 +235,39 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
       const emailSent = (data as any)?.email_sent === true
       const emailErrorStatus = (data as any)?.email_error_status
       const emailMissing = (data as any)?.email_missing
+      const emailErrorBody = String((data as any)?.email_error_body ?? '')
+      const emailErrorBodyLower = emailErrorBody.toLowerCase()
+      const showDebug = new URL(window.location.href).searchParams.get('debug') === '1'
 
       if (emailSent) {
         setMessage('Thanks — check your email for the guide link.')
       } else {
         setShowGuideLink(true)
-        setMessage('Thanks — we couldn’t email the link right now. You can open the guide below.')
+        if (Array.isArray(emailMissing) && emailMissing.length) {
+          setMessage('Thanks — email delivery is being enabled. You can open the guide below.')
+        } else if (emailErrorStatus === 401 || emailErrorStatus === 403) {
+          if (emailErrorBodyLower.includes('verified recipient') || emailErrorBodyLower.includes('verified recipients')) {
+            setMessage('Thanks — email delivery is still in test mode. You can open the guide below.')
+          } else if (emailErrorBodyLower.includes('verify') || emailErrorBodyLower.includes('verified') || emailErrorBodyLower.includes('domain') || emailErrorBodyLower.includes('sender')) {
+            setMessage('Thanks — email delivery needs sender verification. You can open the guide below.')
+          } else {
+            setMessage('Thanks — we couldn’t email the link right now. You can open the guide below.')
+          }
+        } else {
+          setMessage('Thanks — we couldn’t email the link right now. You can open the guide below.')
+        }
         capture('newsletter_guide_email_send_failed', {
           page: window.location.pathname,
           status: typeof emailErrorStatus === 'number' ? emailErrorStatus : null,
           missing: Array.isArray(emailMissing) ? emailMissing.join(',') : null,
         })
+        if (showDebug) {
+          const statusText = typeof emailErrorStatus === 'number' ? String(emailErrorStatus) : 'unknown'
+          const missingText = Array.isArray(emailMissing) && emailMissing.length ? `missing=${emailMissing.join(',')}` : ''
+          const bodyText = emailErrorBody ? `body=${emailErrorBody}` : ''
+          const joined = [statusText, missingText, bodyText].filter(Boolean).join(' | ')
+          setDebugDetails(joined || 'No error details returned')
+        }
       }
       dismissForDays(365)
       capture(duplicate ? 'newsletter_signup_duplicate' : 'newsletter_signup', { page: window.location.pathname })
@@ -301,6 +325,11 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
             {showGuideLink ? (
               <div style={{ marginTop: 10 }}>
                 <Link to="/uk-guide">Open the guide</Link>
+              </div>
+            ) : null}
+            {debugDetails ? (
+              <div className="muted" style={{ marginTop: 8, fontSize: 12, lineHeight: 1.5, wordBreak: 'break-word' }}>
+                {debugDetails}
               </div>
             ) : null}
           </div>
