@@ -123,7 +123,7 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
       capture('newsletter_popup_opened', { reason, page: window.location.pathname })
     }
 
-    const maxDelayMs = 60000
+    const maxDelayMs = 30000
     const timer = window.setTimeout(() => openOnce('delay'), maxDelayMs)
 
     let ticking = false
