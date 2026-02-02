@@ -126,11 +126,13 @@ serve(async (req: Request) => {
   if (error && !duplicate) return jsonResponse(500, { error: 'Failed to save signup' })
 
   const urlForGuide = guideUrl()
+  const guideFrom = (Deno.env.get('RESEND_GUIDE_FROM_EMAIL') ?? '').trim()
   const sendResult = await sendResendEmail({
     to: email,
     subject: 'Your free UK guide: Protect your important digital documents',
     html: guideEmailHtml(urlForGuide),
     text: `Your free UK guide is here: ${urlForGuide}`,
+    ...(guideFrom ? { from: guideFrom } : {}),
   })
 
   if ((sendResult as any)?.ok) return jsonResponse(200, { ok: true, duplicate, email_sent: true })
