@@ -107,13 +107,15 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
 
   useEffect(() => {
     if (session?.user?.id) return
+    const url = new URL(window.location.href)
+    const forceOpen = url.searchParams.get('popup') === '1'
     const dismissUntilRaw = window.localStorage.getItem('evernest_newsletter_dismissed_until')
     const dismissUntil = dismissUntilRaw ? Number(dismissUntilRaw) : 0
     const now = Date.now()
-    if (dismissUntil && now < dismissUntil) return
+    if (!forceOpen && dismissUntil && now < dismissUntil) return
     if (openedRef.current) return
     const openedThisSession = window.sessionStorage.getItem(sessionOpenedKey) === '1'
-    if (openedThisSession) return
+    if (!forceOpen && openedThisSession) return
 
     const openOnce = (reason: string) => {
       if (openedRef.current) return
@@ -125,6 +127,7 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
 
     const maxDelayMs = 30000
     const timer = window.setTimeout(() => openOnce('delay'), maxDelayMs)
+    if (forceOpen) openOnce('force')
 
     let ticking = false
     const onScroll = () => {
@@ -166,7 +169,7 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
     setIsOpen(false)
     setError(null)
     setMessage(null)
-    dismissForDays(7)
+    dismissForDays(1)
     capture('newsletter_popup_dismissed', { page: window.location.pathname })
   }
 
