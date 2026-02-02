@@ -122,10 +122,8 @@ serve(async (req: Request) => {
     user_agent: body?.user_agent ?? null,
   })
 
-  if (error) {
-    if ((error as any).code === '23505') return jsonResponse(200, { ok: true, duplicate: true })
-    return jsonResponse(500, { error: 'Failed to save signup' })
-  }
+  const duplicate = Boolean(error && (error as any).code === '23505')
+  if (error && !duplicate) return jsonResponse(500, { error: 'Failed to save signup' })
 
   const urlForGuide = guideUrl()
   const sendResult = await sendResendEmail({
@@ -135,7 +133,13 @@ serve(async (req: Request) => {
     text: `Your free UK guide is here: ${urlForGuide}`,
   })
 
-  if ((sendResult as any)?.ok) return jsonResponse(200, { ok: true, email_sent: true })
-  if ((sendResult as any)?.skipped) return jsonResponse(200, { ok: true, email_sent: false, email_skipped: true })
-  return jsonResponse(200, { ok: true, email_sent: false })
+  if ((sendResult as any)?.ok) return jsonResponse(200, { ok: true, duplicate, email_sent: true })
+  if ((sendResult as any)?.skipped) {
+    return jsonResponse(200, { ok: true, duplicate, email_sent: false, email_skipped: true, email_missing: (sendResult as any).missing })
+  }
+
+  const emailErrorStatus = (sendResult as any)?.status
+  const emailErrorBody = String((sendResult as any)?.body ?? '')
+  const emailErrorBodyTruncated = emailErrorBody.length > 600 ? emailErrorBody.slice(0, 600) : emailErrorBody
+  return jsonResponse(200, { ok: true, duplicate, email_sent: false, email_error_status: emailErrorStatus, email_error_body: emailErrorBodyTruncated })
 })

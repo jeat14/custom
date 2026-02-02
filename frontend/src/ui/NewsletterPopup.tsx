@@ -10,6 +10,7 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
   const [email, setEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
+  const [showGuideLink, setShowGuideLink] = useState(false)
   const [isSending, setIsSending] = useState(false)
   const [turnstileToken, setTurnstileToken] = useState('')
   const [showTurnstile, setShowTurnstile] = useState(false)
@@ -47,6 +48,7 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
     if (!isOpen) return
     setShowTurnstile(false)
     setTurnstileToken('')
+    setShowGuideLink(false)
   }, [isOpen])
 
   useEffect(() => {
@@ -227,20 +229,24 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
         return
       }
 
-      if ((data as any)?.duplicate) {
-        setMessage('We already have that email — check your inbox for the guide link.')
-        dismissForDays(365)
-        capture('newsletter_signup_duplicate', { page: window.location.pathname })
-        return
-      }
+      const duplicate = Boolean((data as any)?.duplicate)
+      const emailSent = (data as any)?.email_sent === true
+      const emailErrorStatus = (data as any)?.email_error_status
+      const emailMissing = (data as any)?.email_missing
 
-      if ((data as any)?.email_sent === true) {
+      if (emailSent) {
         setMessage('Thanks — check your email for the guide link.')
       } else {
-        setMessage('Thanks — we’ve saved your request. We’ll email the guide link shortly.')
+        setShowGuideLink(true)
+        setMessage('Thanks — we couldn’t email the link right now. You can open the guide below.')
+        capture('newsletter_guide_email_send_failed', {
+          page: window.location.pathname,
+          status: typeof emailErrorStatus === 'number' ? emailErrorStatus : null,
+          missing: Array.isArray(emailMissing) ? emailMissing.join(',') : null,
+        })
       }
       dismissForDays(365)
-      capture('newsletter_signup', { page: window.location.pathname })
+      capture(duplicate ? 'newsletter_signup_duplicate' : 'newsletter_signup', { page: window.location.pathname })
     } finally {
       setIsSending(false)
     }
@@ -292,6 +298,11 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
         {message ? (
           <div className="banner" style={{ marginTop: 12 }}>
             <div style={{ fontSize: 13, fontWeight: 650, letterSpacing: -0.1 }}>{message}</div>
+            {showGuideLink ? (
+              <div style={{ marginTop: 10 }}>
+                <Link to="/uk-guide">Open the guide</Link>
+              </div>
+            ) : null}
           </div>
         ) : null}
 
