@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useVaultCheckInOncePerSession } from '../hooks/useVaultCheckInOncePerSession'
 import { supabase } from '../supabaseClient'
 import { useSupabaseSession } from '../hooks/useSupabaseSession'
@@ -15,7 +15,6 @@ export function AppLayout() {
   const contactEmail = rawContactEmail?.match(/<([^>]+)>/)?.[1] ?? rawContactEmail
   const showBack = location.pathname !== '/'
   const [isAdmin, setIsAdmin] = useState(false)
-  const trustpilotRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     capture('$pageview', {
@@ -51,34 +50,6 @@ export function AppLayout() {
       canceled = true
     }
   }, [session?.user?.id])
-
-  useEffect(() => {
-    const scriptSrc = 'https://widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js'
-    const existing = document.querySelector(`script[src="${scriptSrc}"]`) as HTMLScriptElement | null
-
-    const loadWidget = () => {
-      const api = (window as any).Trustpilot
-      if (api?.loadFromElement && trustpilotRef.current) {
-        api.loadFromElement(trustpilotRef.current, true)
-      }
-    }
-
-    if (existing) {
-      existing.addEventListener('load', loadWidget, { once: true })
-      loadWidget()
-      return () => existing.removeEventListener('load', loadWidget as any)
-    }
-
-    const s = document.createElement('script')
-    s.src = scriptSrc
-    s.async = true
-    s.addEventListener('load', loadWidget, { once: true })
-    document.head.appendChild(s)
-
-    return () => {
-      s.removeEventListener('load', loadWidget as any)
-    }
-  }, [])
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -160,22 +131,6 @@ export function AppLayout() {
               {contactEmail}
             </a>
           ) : null}
-        </div>
-        <div style={{ flex: '1 1 320px', maxWidth: 420 }}>
-          <div
-            ref={trustpilotRef}
-            className="trustpilot-widget"
-            data-locale="en-US"
-            data-template-id="56278e9abfbbba0bdcd568bc"
-            data-businessunit-id="697b3bf968c5676d5f35f9c4"
-            data-style-height="52px"
-            data-style-width="100%"
-            data-token="f937daeb-1e1c-4c94-98ab-46cd1681acc6"
-          >
-            <a href="https://www.trustpilot.com/review/alwaysnest.co.uk" target="_blank" rel="noopener noreferrer">
-              Trustpilot
-            </a>
-          </div>
         </div>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           <Link to="/how-it-works">How it works</Link>
