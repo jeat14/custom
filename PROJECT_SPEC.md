@@ -9,6 +9,11 @@
 - Keep trust-building links visible, but avoid duplicate primary CTAs (one “primary” version, others secondary).
 - Keep wording calm, minimal, and reassuring; prefer short, clear sentences.
 
+## Trust Signals
+- Keep the Trustpilot widget in the footer as a lightweight trust cue (do not remove unless explicitly requested).
+- Keep a simple, non-technical trust sentence on the homepage (e.g., “Built to help families safely store and pass on important digital information.”).
+- Keep a small copyright line at the bottom of the footer (e.g., “© {year} Evernest”).
+
 ## Launch Priorities (Day 7)
 - Prioritize clarity over complexity: ship a simple “How it works” narrative page.
 - Prefer real UI visuals over stock: use screenshots or UI previews to prove the product works.
@@ -28,6 +33,7 @@
 ## Lead Magnet / Email Capture
 - Landing page uses a popup to capture emails as one-time help (avoid “newsletter/updates/stay in touch” language).
 - Offer: “Free UK guide: Protect your important digital documents”.
+- Deliver the guide immediately via email after signup; link to `/uk-guide` (or override via `LEAD_MAGNET_GUIDE_URL`).
 - Emails are stored in Supabase `public.newsletter_signups`.
 - Timing: trigger at 50% scroll or after ~45–60 seconds; show once per browser session; don’t repeat aggressively.
 - Anti-spam:
@@ -38,6 +44,7 @@
 - Required secrets / env:
   - Vercel: `VITE_TURNSTILE_SITE_KEY`
   - Supabase Functions secret: `TURNSTILE_SECRET_KEY`
+  - Supabase Functions secrets (outbound email): `RESEND_API_KEY`, `RESEND_FROM_EMAIL` (optional: `RESEND_REPLY_TO_EMAIL`)
 - Admin operations:
   - Provide an admin-only Newsletter page (`/admin/newsletter`) with Copy/Download CSV.
   - Allow reads only for admins (`public.is_admin()`).
