@@ -69,7 +69,7 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
       turnstileWidgetIdRef.current = api.render(turnstileRef.current, {
         sitekey: siteKey,
         size: 'compact',
-        appearance: 'interaction-only',
+        appearance: 'always',
         callback: (token: string) => setTurnstileToken(token),
         'expired-callback': () => setTurnstileToken(''),
         'error-callback': () => setTurnstileToken(''),
@@ -200,7 +200,7 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
     }
     if (!turnstileToken) {
       setShowTurnstile(true)
-      setError('Complete the verification to continue')
+      setError('Please complete the quick check below')
       return
     }
 
