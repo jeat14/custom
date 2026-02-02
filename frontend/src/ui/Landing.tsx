@@ -1,9 +1,39 @@
+import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { NewsletterPopup } from './NewsletterPopup'
 
 export function Landing() {
   const rawContactEmail = import.meta.env.VITE_CONTACT_EMAIL as string | undefined
   const contactEmail = rawContactEmail?.match(/<([^>]+)>/)?.[1] ?? rawContactEmail
+  const trustpilotRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    const scriptSrc = 'https://widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js'
+    const existing = document.querySelector(`script[src="${scriptSrc}"]`) as HTMLScriptElement | null
+
+    const loadWidget = () => {
+      const api = (window as any).Trustpilot
+      if (api?.loadFromElement && trustpilotRef.current) {
+        api.loadFromElement(trustpilotRef.current, true)
+      }
+    }
+
+    if (existing) {
+      existing.addEventListener('load', loadWidget, { once: true })
+      loadWidget()
+      return () => existing.removeEventListener('load', loadWidget as any)
+    }
+
+    const s = document.createElement('script')
+    s.src = scriptSrc
+    s.async = true
+    s.addEventListener('load', loadWidget, { once: true })
+    document.head.appendChild(s)
+
+    return () => {
+      s.removeEventListener('load', loadWidget as any)
+    }
+  }, [])
 
   return (
     <div style={{ padding: 24, maxWidth: 980, margin: '0 auto' }}>
@@ -24,6 +54,23 @@ export function Landing() {
 
         <div className="muted" style={{ marginTop: 10, lineHeight: 1.6 }}>
           Built to be there for the people you trust — without putting your data in ours.
+        </div>
+
+        <div style={{ marginTop: 14 }}>
+          <div
+            ref={trustpilotRef}
+            className="trustpilot-widget"
+            data-locale="en-US"
+            data-template-id="56278e9abfbbba0bdcd568bc"
+            data-businessunit-id="697b3bf968c5676d5f35f9c4"
+            data-style-height="52px"
+            data-style-width="100%"
+            data-token="f937daeb-1e1c-4c94-98ab-46cd1681acc6"
+          >
+            <a href="https://www.trustpilot.com/review/alwaysnest.co.uk" target="_blank" rel="noopener noreferrer">
+              Trustpilot
+            </a>
+          </div>
         </div>
 
         <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
