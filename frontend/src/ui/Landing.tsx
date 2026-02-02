@@ -23,7 +23,7 @@ export function Landing() {
         </div>
 
         <div className="muted" style={{ marginTop: 10, lineHeight: 1.6 }}>
-          Built to be there for the people you trust — without putting your data in ours.
+          Built to help families safely store and pass on important digital information.
         </div>
 
         <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>

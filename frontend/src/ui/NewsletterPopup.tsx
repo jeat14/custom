@@ -176,7 +176,7 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
     const addr = email.trim().toLowerCase()
     const looksValid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(addr)
     if (!looksValid) {
-      setError('Enter a valid email')
+      setError('Enter a valid email address')
       return
     }
     if (!supabase) {
@@ -197,7 +197,7 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
     }
     if (!turnstileToken) {
       setShowTurnstile(true)
-      setError('Complete the verification check')
+      setError('Complete the verification to continue')
       return
     }
 
@@ -225,13 +225,13 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
       }
 
       if ((data as any)?.duplicate) {
-        setMessage('You’re already on the list. Thanks.')
+        setMessage('We already have that email — thanks.')
         dismissForDays(365)
         capture('newsletter_signup_duplicate', { page: window.location.pathname })
         return
       }
 
-      setMessage('Thanks — you’re on the list.')
+      setMessage('Thanks — we’ve saved your request.')
       dismissForDays(365)
       capture('newsletter_signup', { page: window.location.pathname })
     } finally {
@@ -263,10 +263,10 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
             ref={inputRef}
             value={email}
             onChange={(e: any) => setEmail(e.target.value)}
-            placeholder="you@domain.com"
+            placeholder="you@example.com"
             inputMode="email"
             autoComplete="email"
-            aria-label="Email address"
+            aria-label="Your email address"
           />
           <button type="button" className="primary" onClick={() => void submit()} disabled={isSending}>
             {isSending ? 'Saving…' : 'Send me my guide'}
@@ -289,7 +289,7 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
         ) : null}
 
         <div className="muted" style={{ marginTop: 12, fontSize: 12, lineHeight: 1.55 }}>
-          By subscribing, you agree to our <Link to="/privacy">Privacy Policy</Link> and <Link to="/terms">Terms</Link>.
+          By requesting the guide, you agree to our <Link to="/privacy">Privacy Policy</Link> and <Link to="/terms">Terms</Link>.
         </div>
       </div>
     </div>

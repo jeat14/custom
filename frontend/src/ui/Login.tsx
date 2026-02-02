@@ -22,7 +22,7 @@ export function Login() {
     setMessage(null)
     const addr = email.trim()
     if (!addr) {
-      setMessage('Enter your email to sign in.')
+      setMessage('Enter your email address to sign in.')
       return
     }
 
@@ -42,7 +42,7 @@ export function Login() {
         setError(authError.message)
         return
       }
-      setMessage('Magic link sent. Check your email to finish signing in.')
+      setMessage('Magic link sent — check your email to finish signing in.')
       const domain = addr.includes('@') ? addr.split('@').slice(-1)[0] : undefined
       capture('magic_link_sent', domain ? { email_domain: domain } : undefined)
     } finally {
@@ -80,7 +80,7 @@ export function Login() {
         ) : null}
 
         <div style={{ marginTop: 14, display: 'flex', gap: 10, alignItems: 'center' }}>
-          <input value={email} onChange={(e: any) => setEmail(e.target.value)} placeholder="you@domain.com" />
+          <input value={email} onChange={(e: any) => setEmail(e.target.value)} placeholder="you@example.com" />
           <button type="button" className="primary" onClick={() => void sendMagicLink()} disabled={isSending}>
             {isSending ? 'Sending…' : 'Send Magic Link'}
           </button>
