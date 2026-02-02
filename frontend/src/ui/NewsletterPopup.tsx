@@ -13,6 +13,7 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
   const [isSending, setIsSending] = useState(false)
   const [turnstileToken, setTurnstileToken] = useState('')
   const openedRef = useRef(false)
+  const sessionOpenedKey = 'evernest_newsletter_opened_session'
   const inputRef = useRef<HTMLInputElement | null>(null)
   const previousFocusRef = useRef<HTMLElement | null>(null)
   const turnstileRef = useRef<HTMLDivElement | null>(null)
@@ -102,23 +103,47 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
     const now = Date.now()
     if (dismissUntil && now < dismissUntil) return
     if (openedRef.current) return
+    const openedThisSession = window.sessionStorage.getItem(sessionOpenedKey) === '1'
+    if (openedThisSession) return
 
     const openOnce = (reason: string) => {
       if (openedRef.current) return
       openedRef.current = true
+      window.sessionStorage.setItem(sessionOpenedKey, '1')
       setIsOpen(true)
       capture('newsletter_popup_opened', { reason, page: window.location.pathname })
     }
 
-    const timer = window.setTimeout(() => openOnce('delay'), 12000)
+    const maxDelayMs = 60000
+    const timer = window.setTimeout(() => openOnce('delay'), maxDelayMs)
+
+    let ticking = false
+    const onScroll = () => {
+      if (ticking) return
+      ticking = true
+      window.requestAnimationFrame(() => {
+        ticking = false
+        if (openedRef.current) return
+        const doc = document.documentElement
+        const scrollTop = window.scrollY || doc.scrollTop || 0
+        const scrollHeight = doc.scrollHeight || 0
+        const viewportHeight = window.innerHeight || 0
+        const maxScroll = Math.max(1, scrollHeight - viewportHeight)
+        const progress = scrollTop / maxScroll
+        if (progress >= 0.5) openOnce('scroll_50pct')
+      })
+    }
+
     const onMouseOut = (e: MouseEvent) => {
       const nearTop = typeof e.clientY === 'number' && e.clientY <= 0
       if (nearTop) openOnce('exit_intent')
     }
+    window.addEventListener('scroll', onScroll, { passive: true })
     document.addEventListener('mouseout', onMouseOut)
 
     return () => {
       window.clearTimeout(timer)
+      window.removeEventListener('scroll', onScroll)
       document.removeEventListener('mouseout', onMouseOut)
     }
   }, [session?.user?.id])
