@@ -172,7 +172,7 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
         body: {
           email: addr,
           token: turnstileToken,
-          source: 'landing_popup',
+          source: 'lead_magnet_uk_guide',
           path: window.location.pathname,
           referrer: document.referrer || null,
           user_agent: navigator.userAgent || null,
@@ -196,7 +196,7 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
         return
       }
 
-      setMessage('Thanks — we’ll email you product updates.')
+      setMessage('Thanks — you’re on the list.')
       dismissForDays(365)
       capture('newsletter_signup', { page: window.location.pathname })
     } finally {
@@ -212,10 +212,10 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
           <div>
             <div id="newsletter_title" style={{ fontSize: 16, fontWeight: 750, letterSpacing: -0.2 }}>
-              Get product updates
+              Free UK guide: Protect your important digital documents
             </div>
             <div className="muted" style={{ marginTop: 8, fontSize: 13, lineHeight: 1.55 }}>
-              No spam. Just major launches and security updates. Unsubscribe anytime.
+              One email • No spam • UK-based
             </div>
           </div>
           <button type="button" onClick={() => close()} style={{ padding: '8px 10px', boxShadow: 'none' }}>
@@ -234,7 +234,7 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
             aria-label="Email address"
           />
           <button type="button" className="primary" onClick={() => void submit()} disabled={isSending}>
-            {isSending ? 'Saving…' : 'Notify Me'}
+            {isSending ? 'Saving…' : 'Send me my guide'}
           </button>
         </div>
 
