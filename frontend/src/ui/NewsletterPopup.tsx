@@ -225,13 +225,17 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
       }
 
       if ((data as any)?.duplicate) {
-        setMessage('We already have that email — thanks.')
+        setMessage('We already have that email — check your inbox for the guide link.')
         dismissForDays(365)
         capture('newsletter_signup_duplicate', { page: window.location.pathname })
         return
       }
 
-      setMessage('Thanks — we’ve saved your request.')
+      if ((data as any)?.email_sent === true) {
+        setMessage('Thanks — check your email for the guide link.')
+      } else {
+        setMessage('Thanks — we’ve saved your request. We’ll email the guide link shortly.')
+      }
       dismissForDays(365)
       capture('newsletter_signup', { page: window.location.pathname })
     } finally {

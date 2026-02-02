@@ -14,6 +14,7 @@ import { Pricing } from './ui/Pricing'
 import { Security } from './ui/Security'
 import { Support } from './ui/Support'
 import { Terms } from './ui/Terms'
+import { UkGuide } from './ui/UkGuide'
 import { VaultAssetEntry } from './ui/VaultAssetEntry'
 
 export const router = createBrowserRouter([
@@ -28,6 +29,7 @@ export const router = createBrowserRouter([
       { path: 'security', element: <Security /> },
       { path: 'security-audit', element: <Navigate to="/security" replace /> },
       { path: 'how-it-works', element: <HowItWorks /> },
+      { path: 'uk-guide', element: <UkGuide /> },
       { path: 'pricing', element: <Pricing /> },
       { path: 'terms', element: <Terms /> },
       { path: 'privacy', element: <Privacy /> },

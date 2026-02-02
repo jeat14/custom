@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4'
+import { sendResendEmail } from '../_shared/resend.ts'
 
 type Json = Record<string, unknown>
 
@@ -27,6 +28,32 @@ function looksLikeEmail(raw: string) {
   if (!addr) return false
   if (addr.length > 320) return false
   return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(addr)
+}
+
+function escapeHtml(text: string) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
+function guideUrl() {
+  const explicit = (Deno.env.get('LEAD_MAGNET_GUIDE_URL') ?? '').trim()
+  if (explicit) return explicit
+  const appUrl = (Deno.env.get('APP_URL') ?? '').trim()
+  if (!appUrl) return 'https://alwaysnest.co.uk/uk-guide'
+  return `${appUrl.replace(/\/$/, '')}/uk-guide`
+}
+
+function guideEmailHtml(url: string) {
+  const link = escapeHtml(url)
+  return `<div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;line-height:1.6">
+<h2 style="margin:0 0 12px 0">Your free UK guide</h2>
+<p style="margin:0 0 12px 0">Here’s the guide you requested: <a href="${link}">${link}</a></p>
+<p style="margin:0;color:rgba(31,41,55,0.75);font-size:13px;line-height:1.6">If you didn’t request this, you can ignore this email.</p>
+</div>`
 }
 
 async function verifyTurnstile(token: string, remoteIp?: string | null) {
@@ -100,6 +127,15 @@ serve(async (req: Request) => {
     return jsonResponse(500, { error: 'Failed to save signup' })
   }
 
-  return jsonResponse(200, { ok: true })
-})
+  const urlForGuide = guideUrl()
+  const sendResult = await sendResendEmail({
+    to: email,
+    subject: 'Your free UK guide: Protect your important digital documents',
+    html: guideEmailHtml(urlForGuide),
+    text: `Your free UK guide is here: ${urlForGuide}`,
+  })
 
+  if ((sendResult as any)?.ok) return jsonResponse(200, { ok: true, email_sent: true })
+  if ((sendResult as any)?.skipped) return jsonResponse(200, { ok: true, email_sent: false, email_skipped: true })
+  return jsonResponse(200, { ok: true, email_sent: false })
+})
