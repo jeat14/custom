@@ -245,6 +245,8 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
         setShowGuideLink(true)
         if (Array.isArray(emailMissing) && emailMissing.length) {
           setMessage('Thanks — email delivery is being enabled. You can open the guide below.')
+        } else if (emailErrorBodyLower.includes('testing domain restriction') || emailErrorBodyLower.includes('resend.dev domain')) {
+          setMessage('Thanks — email delivery needs a verified sending domain. You can open the guide below.')
         } else if (emailErrorStatus === 401 || emailErrorStatus === 403) {
           if (emailErrorBodyLower.includes('verified recipient') || emailErrorBodyLower.includes('verified recipients')) {
             setMessage('Thanks — email delivery is still in test mode. You can open the guide below.')

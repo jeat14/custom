@@ -51,17 +51,5 @@ export async function sendResendEmail(params: SendParams): Promise<SendResult> {
   const first = await sendOnce(from)
   if ((first as any)?.ok) return first
 
-  const status = (first as any)?.status
-  const body = String((first as any)?.body ?? '')
-  const bodyLower = body.toLowerCase()
-  const looksLikeSenderIssue =
-    (status === 400 || status === 401 || status === 403) &&
-    (bodyLower.includes('verify') || bodyLower.includes('verified') || bodyLower.includes('domain') || bodyLower.includes('sender'))
-
-  if (looksLikeSenderIssue && from.toLowerCase() !== 'onboarding@resend.dev') {
-    const retry = await sendOnce('onboarding@resend.dev')
-    if ((retry as any)?.ok) return retry
-  }
-
   return first
 }
