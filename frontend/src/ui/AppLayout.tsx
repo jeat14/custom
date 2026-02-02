@@ -166,11 +166,12 @@ export function AppLayout() {
             ref={trustpilotRef}
             className="trustpilot-widget"
             data-locale="en-US"
-            data-template-id="56278e9abfbbba0bdcd568bc"
+            data-template-id="5419b6ffb0d04a076446a9af"
             data-businessunit-id="697b3bf968c5676d5f35f9c4"
-            data-style-height="52px"
+            data-style-height="20px"
             data-style-width="100%"
             data-token="f937daeb-1e1c-4c94-98ab-46cd1681acc6"
+            data-theme="light"
           >
             <a href="https://www.trustpilot.com/review/alwaysnest.co.uk" target="_blank" rel="noopener noreferrer">
               Trustpilot
@@ -186,6 +187,9 @@ export function AppLayout() {
           <Link to="/privacy">Privacy</Link>
           <Link to="/support">Support</Link>
           <FeedbackWidget userId={session?.user?.id ?? null} />
+        </div>
+        <div style={{ flex: '0 0 100%', textAlign: 'center', marginTop: 6 }}>
+          © {new Date().getFullYear()} Evernest
         </div>
       </footer>
     </div>
