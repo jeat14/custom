@@ -5,6 +5,7 @@ import { supabase } from '../supabaseClient'
 import { useSupabaseSession } from '../hooks/useSupabaseSession'
 import { FeedbackWidget } from './FeedbackWidget'
 import { capture } from '../analytics'
+import { initGoogleAnalytics, trackGooglePageView } from '../googleAnalytics'
 
 export function AppLayout() {
   useVaultCheckInOncePerSession()
@@ -23,6 +24,8 @@ export function AppLayout() {
       search: location.search,
       user_id: session?.user?.id ?? null,
     })
+    initGoogleAnalytics()
+    trackGooglePageView(location.pathname, location.search)
   }, [location.pathname, location.search, session?.user?.id])
 
   useEffect(() => {
