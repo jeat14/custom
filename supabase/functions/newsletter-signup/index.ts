@@ -49,25 +49,52 @@ function guideUrl() {
 
 function guideEmailHtml(url: string) {
   const link = escapeHtml(url)
-  return `<div style="margin:0;padding:0;background:#f6f4ef">
-  <div style="max-width:560px;margin:0 auto;padding:24px">
-    <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;line-height:1.6;color:#111827">
-      <div style="font-weight:800;letter-spacing:-0.2px;font-size:16px;margin:0 0 12px 0">Evernest</div>
-      <div style="background:#ffffff;border:1px solid rgba(17,24,39,0.10);border-radius:14px;padding:18px">
-        <h2 style="margin:0 0 10px 0;font-size:18px;letter-spacing:-0.2px">Your free UK guide</h2>
-        <p style="margin:0 0 14px 0;color:#374151">Here’s the guide you requested. You can open it instantly using the button below.</p>
-        <div style="margin:0 0 14px 0">
-          <a href="${link}" style="display:inline-block;background:#0f3a2b;color:#ffffff;text-decoration:none;padding:10px 14px;border-radius:10px;font-weight:700;font-size:14px">Open the guide</a>
-        </div>
-        <p style="margin:0 0 12px 0;color:#6b7280;font-size:13px;line-height:1.6">If the button doesn’t work, use this link: <a href="${link}" style="color:#0f3a2b;text-decoration:underline">${link}</a></p>
-        <p style="margin:0;color:#6b7280;font-size:13px;line-height:1.6">If you didn’t request this, you can ignore this email.</p>
-      </div>
-      <div style="margin-top:14px;color:#6b7280;font-size:12px;line-height:1.6">
-        Evernest • Secure, zero-knowledge vaulting for your digital estate
-      </div>
-    </div>
-  </div>
-</div>`
+  return `<!doctype html>
+<html>
+  <body style="margin:0;padding:0;background:#f6f4ef">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;background:#f6f4ef">
+      <tr>
+        <td align="center" style="padding:24px">
+          <table role="presentation" width="560" cellspacing="0" cellpadding="0" style="border-collapse:collapse;max-width:560px;width:100%">
+            <tr>
+              <td style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#111827;font-size:14px;line-height:1.6">
+                <div style="font-weight:800;letter-spacing:-0.2px;font-size:16px;margin:0 0 12px 0">Evernest</div>
+              </td>
+            </tr>
+            <tr>
+              <td style="background:#ffffff;border:1px solid rgba(17,24,39,0.10);border-radius:14px;padding:18px;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#111827;font-size:14px;line-height:1.6">
+                <div style="font-size:18px;font-weight:750;letter-spacing:-0.2px;margin:0 0 10px 0">Your free UK guide</div>
+                <div style="margin:0 0 14px 0;color:#374151">Here’s the guide you requested. Use the button below to open it.</div>
+
+                <table role="presentation" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin:0 0 14px 0">
+                  <tr>
+                    <td bgcolor="#0f3a2b" style="border-radius:10px">
+                      <a href="${link}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:10px 14px;color:#ffffff;text-decoration:none;font-weight:700;font-size:14px">
+                        Open the guide
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+
+                <div style="margin:0 0 12px 0;color:#6b7280;font-size:13px;line-height:1.6">
+                  If the button doesn’t work, copy and paste this link into your browser:
+                  <br />
+                  <a href="${link}" target="_blank" rel="noopener noreferrer" style="color:#0f3a2b;text-decoration:underline">${link}</a>
+                </div>
+                <div style="margin:0;color:#6b7280;font-size:13px;line-height:1.6">If you didn’t request this, you can ignore this email.</div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding-top:14px;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#6b7280;font-size:12px;line-height:1.6">
+                Evernest • Secure, zero-knowledge vaulting for your digital estate
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`
 }
 
 async function verifyTurnstile(token: string, remoteIp?: string | null) {
