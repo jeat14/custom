@@ -49,10 +49,24 @@ function guideUrl() {
 
 function guideEmailHtml(url: string) {
   const link = escapeHtml(url)
-  return `<div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;line-height:1.6">
-<h2 style="margin:0 0 12px 0">Your free UK guide</h2>
-<p style="margin:0 0 12px 0">Here’s the guide you requested: <a href="${link}">${link}</a></p>
-<p style="margin:0;color:rgba(31,41,55,0.75);font-size:13px;line-height:1.6">If you didn’t request this, you can ignore this email.</p>
+  return `<div style="margin:0;padding:0;background:#f6f4ef">
+  <div style="max-width:560px;margin:0 auto;padding:24px">
+    <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;line-height:1.6;color:#111827">
+      <div style="font-weight:800;letter-spacing:-0.2px;font-size:16px;margin:0 0 12px 0">Evernest</div>
+      <div style="background:#ffffff;border:1px solid rgba(17,24,39,0.10);border-radius:14px;padding:18px">
+        <h2 style="margin:0 0 10px 0;font-size:18px;letter-spacing:-0.2px">Your free UK guide</h2>
+        <p style="margin:0 0 14px 0;color:#374151">Here’s the guide you requested. You can open it instantly using the button below.</p>
+        <div style="margin:0 0 14px 0">
+          <a href="${link}" style="display:inline-block;background:#0f3a2b;color:#ffffff;text-decoration:none;padding:10px 14px;border-radius:10px;font-weight:700;font-size:14px">Open the guide</a>
+        </div>
+        <p style="margin:0 0 12px 0;color:#6b7280;font-size:13px;line-height:1.6">If the button doesn’t work, use this link: <a href="${link}" style="color:#0f3a2b;text-decoration:underline">${link}</a></p>
+        <p style="margin:0;color:#6b7280;font-size:13px;line-height:1.6">If you didn’t request this, you can ignore this email.</p>
+      </div>
+      <div style="margin-top:14px;color:#6b7280;font-size:12px;line-height:1.6">
+        Evernest • Secure, zero-knowledge vaulting for your digital estate
+      </div>
+    </div>
+  </div>
 </div>`
 }
 

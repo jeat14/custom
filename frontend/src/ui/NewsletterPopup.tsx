@@ -240,7 +240,8 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
       const showDebug = new URL(window.location.href).searchParams.get('debug') === '1'
 
       if (emailSent) {
-        setMessage('Thanks — check your email for the guide link.')
+        setShowGuideLink(true)
+        setMessage('Thanks — check your inbox (and spam) for the guide link. You can also open it below.')
       } else {
         setShowGuideLink(true)
         if (Array.isArray(emailMissing) && emailMissing.length) {
