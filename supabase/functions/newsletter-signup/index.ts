@@ -41,10 +41,20 @@ function escapeHtml(text: string) {
 
 function guideUrl() {
   const explicit = (Deno.env.get('LEAD_MAGNET_GUIDE_URL') ?? '').trim()
-  if (explicit) return explicit
+  const normalize = (rawUrl: string) => {
+    const u = rawUrl.trim()
+    if (!u) return u
+    if (u.startsWith('https://') || u.startsWith('http://')) return u
+    if (u.startsWith('ttps://')) return `h${u}`
+    if (u.startsWith('//')) return `https:${u}`
+    return `https://${u}`
+  }
+
+  if (explicit) return normalize(explicit)
   const appUrl = (Deno.env.get('APP_URL') ?? '').trim()
-  if (!appUrl) return 'https://alwaysnest.co.uk/uk-guide'
-  return `${appUrl.replace(/\/$/, '')}/uk-guide`
+  const normalizedAppUrl = normalize(appUrl)
+  if (!normalizedAppUrl) return 'https://alwaysnest.co.uk/uk-guide'
+  return `${normalizedAppUrl.replace(/\/$/, '')}/uk-guide`
 }
 
 function guideEmailHtml(url: string) {
