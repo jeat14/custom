@@ -26,6 +26,14 @@ export function Landing() {
           Built to help families safely store and pass on important digital information.
         </div>
 
+        <div className="muted" style={{ marginTop: 8, lineHeight: 1.6 }}>
+          Designed so your family can access what matters when they need it.
+        </div>
+
+        <div className="muted" style={{ marginTop: 8, lineHeight: 1.6 }}>
+          For individuals planning ahead, and for families who want peace of mind.
+        </div>
+
         <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <Link to="/login" style={{ textDecoration: 'none' }}>
             <button type="button" className="primary">
