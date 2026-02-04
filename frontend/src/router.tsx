@@ -16,6 +16,7 @@ import { Support } from './ui/Support'
 import { Terms } from './ui/Terms'
 import { UkGuide } from './ui/UkGuide'
 import { VaultAssetEntry } from './ui/VaultAssetEntry'
+import { ForProfessionals } from './ui/ForProfessionals'
 
 export const router = createBrowserRouter([
   { path: '/login', element: <Login /> },
@@ -29,6 +30,7 @@ export const router = createBrowserRouter([
       { path: 'security', element: <Security /> },
       { path: 'security-audit', element: <Navigate to="/security" replace /> },
       { path: 'how-it-works', element: <HowItWorks /> },
+      { path: 'for-professionals', element: <ForProfessionals /> },
       { path: 'uk-guide', element: <UkGuide /> },
       { path: 'pricing', element: <Pricing /> },
       { path: 'terms', element: <Terms /> },
