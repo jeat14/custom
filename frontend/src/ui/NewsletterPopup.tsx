@@ -130,6 +130,8 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
     }
 
     const maxDelayMs = 30000
+    const minExitIntentDelayMs = 8000
+    const minScrollablePixels = 600
     const timer = window.setTimeout(() => openOnce('delay'), maxDelayMs)
     if (forceOpen) openOnce('force')
 
@@ -144,13 +146,15 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
         const scrollTop = window.scrollY || doc.scrollTop || 0
         const scrollHeight = doc.scrollHeight || 0
         const viewportHeight = window.innerHeight || 0
-        const maxScroll = Math.max(1, scrollHeight - viewportHeight)
-        const progress = scrollTop / maxScroll
+        const maxScroll = Math.max(0, scrollHeight - viewportHeight)
+        if (maxScroll < minScrollablePixels) return
+        const progress = scrollTop / Math.max(1, maxScroll)
         if (progress >= 0.5) openOnce('scroll_50pct')
       })
     }
 
     const onMouseOut = (e: MouseEvent) => {
+      if (Date.now() - now < minExitIntentDelayMs) return
       const nearTop = typeof e.clientY === 'number' && e.clientY <= 0
       if (nearTop) openOnce('exit_intent')
     }
