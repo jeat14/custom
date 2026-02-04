@@ -129,10 +129,8 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
       capture('newsletter_popup_opened', { reason, page: window.location.pathname })
     }
 
-    const maxDelayMs = 30000
     const minExitIntentDelayMs = 8000
     const minScrollablePixels = 600
-    const timer = window.setTimeout(() => openOnce('delay'), maxDelayMs)
     if (forceOpen) openOnce('force')
 
     let ticking = false
@@ -162,7 +160,6 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
     document.addEventListener('mouseout', onMouseOut)
 
     return () => {
-      window.clearTimeout(timer)
       window.removeEventListener('scroll', onScroll)
       document.removeEventListener('mouseout', onMouseOut)
     }
