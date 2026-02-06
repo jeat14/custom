@@ -171,11 +171,14 @@ export function DigitalEstatePlanning() {
           <ul style={{ margin: 0, paddingLeft: 18 }}>
             <li>Passwords after death: keep access instructions safe and organised</li>
             <li>Emergency access: recovery kit + controlled handover</li>
-            <li>Private by design: zero-knowledge, client-side encryption</li>
+            <li>Private by design: zero-knowledge, client-side encryption (we can’t see your data)</li>
           </ul>
         </div>
 
         <div style={{ marginTop: 16 }}>
+          <div className="muted" style={{ marginBottom: 8, fontSize: 13, lineHeight: 1.6 }}>
+            Created to solve the “passwords after death” problem.
+          </div>
           <button
             type="button"
             className="primary"
@@ -188,8 +191,12 @@ export function DigitalEstatePlanning() {
             Get the free UK digital estate guide
           </button>
           <div className="muted" style={{ marginTop: 8, fontSize: 13 }}>
-            Takes a few minutes. No obligation.
+            You’ll get the free UK guide and can create a vault later if you choose.
           </div>
+        </div>
+
+        <div className="muted" style={{ marginTop: 12, fontSize: 13, lineHeight: 1.6 }}>
+          Evernest is not a password manager — it’s designed for emergency and end-of-life access.
         </div>
 
         {showForm ? (
@@ -225,7 +232,11 @@ export function DigitalEstatePlanning() {
               </div>
             ) : null}
             <div className="muted" style={{ marginTop: 10, fontSize: 12, lineHeight: 1.55 }}>
-              Zero-knowledge encryption — we can’t see your data. We can’t reset your vault password (only you control access).
+              Client-side encryption using industry-standard cryptography. Zero-knowledge means we can’t see your data. We can’t reset your
+              vault password (only you control access).{' '}
+              <a href="/security" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit' }}>
+                Security model documented publicly
+              </a>
             </div>
           </div>
         ) : null}
@@ -271,6 +282,9 @@ export function DigitalEstatePlanning() {
         <div style={{ marginTop: 18, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
           <div style={{ fontSize: 13, fontWeight: 750, letterSpacing: -0.1 }}>Don’t leave your digital life unanswered</div>
           <div style={{ marginTop: 10 }}>
+            <div className="muted" style={{ marginBottom: 8, fontSize: 13, lineHeight: 1.6 }}>
+              Created to solve the “passwords after death” problem.
+            </div>
             <button
               type="button"
               className="primary"
@@ -283,7 +297,7 @@ export function DigitalEstatePlanning() {
               Get the free UK digital estate guide
             </button>
             <div className="muted" style={{ marginTop: 8, fontSize: 13 }}>
-              Takes a few minutes. No obligation.
+              You’ll get the free UK guide and can create a vault later if you choose.
             </div>
           </div>
         </div>

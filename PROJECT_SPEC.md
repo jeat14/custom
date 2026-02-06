@@ -51,6 +51,25 @@
 - Security headers:
   - CSP must allow Turnstile (`https://challenges.cloudflare.com`) in `script-src`, `frame-src`, and `connect-src`.
 
+## Google Ads Landing Pages
+- Use dedicated, focused pages for search ads; do not route through the global AppLayout header/footer.
+- Structure rules:
+  - No header navigation
+  - No footer navigation
+  - No popups
+  - One primary CTA only
+- Page: `/digital-estate-planning`
+  - Goal: convert high-intent UK search traffic to one action (request the free UK guide).
+  - H1: “Digital estate planning for UK families”
+  - Fear-anchored subheadline: “What happens to your passwords, crypto, and online accounts if something happens to you?”
+  - Trust cues near CTA:
+    - Add one short “why trust this?” line above CTA
+    - Add a “what happens after I click?” line under CTA
+    - Clearly differentiate from password managers (“not a password manager — designed for emergency and end-of-life access”)
+    - Include one specificity anchor in security copy (e.g. client-side encryption, publicly documented model, UK-based)
+  - Tracking:
+    - Capture UTMs on load and on CTA click
+    - Track a single conversion event (guide request)
 ## Email Receiving (Resend Inbound)
 - Resend can receive emails via a Resend-managed inbound address (`<anything>@<id>.resend.app`) or a custom domain (MX records).
 - Configure a Resend webhook for `email.received` pointing at Supabase Edge Function `resend-inbound-email`.
