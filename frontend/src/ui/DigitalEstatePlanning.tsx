@@ -164,7 +164,8 @@ export function DigitalEstatePlanning() {
         </div>
 
         <div style={{ marginTop: 14, lineHeight: 1.6 }}>
-          Store passwords, documents, and instructions securely — so your family can access what matters when they need it.
+          Store passwords, documents, and instructions securely — so your family can access what matters when they need it, without guessing or
+          delays.
         </div>
 
         <div style={{ marginTop: 14, lineHeight: 1.7 }}>
@@ -245,6 +246,12 @@ export function DigitalEstatePlanning() {
           <div style={{ fontSize: 13, fontWeight: 750, letterSpacing: -0.1 }}>FAQ</div>
           <div style={{ marginTop: 10, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12 }}>
             <div className="card" style={{ padding: 14 }}>
+              <div style={{ fontSize: 13, fontWeight: 750, letterSpacing: -0.1 }}>Can Evernest access my data?</div>
+              <div className="muted" style={{ marginTop: 6, lineHeight: 1.6 }}>
+                No. Vault contents are encrypted client-side. Zero-knowledge means we don’t have the keys to view your data.
+              </div>
+            </div>
+            <div className="card" style={{ padding: 14 }}>
               <div style={{ fontSize: 13, fontWeight: 750, letterSpacing: -0.1 }}>What is a digital estate?</div>
               <div className="muted" style={{ marginTop: 6, lineHeight: 1.6 }}>
                 It’s the set of online accounts, passwords, devices, documents, and instructions your family may need if you can’t
@@ -262,12 +269,6 @@ export function DigitalEstatePlanning() {
               <div style={{ fontSize: 13, fontWeight: 750, letterSpacing: -0.1 }}>Is this designed for the UK?</div>
               <div className="muted" style={{ marginTop: 6, lineHeight: 1.6 }}>
                 Yes — the guide and examples are UK-focused and written for practical estate-planning scenarios.
-              </div>
-            </div>
-            <div className="card" style={{ padding: 14 }}>
-              <div style={{ fontSize: 13, fontWeight: 750, letterSpacing: -0.1 }}>Can Evernest access my data?</div>
-              <div className="muted" style={{ marginTop: 6, lineHeight: 1.6 }}>
-                No. Vault contents are encrypted client-side. Zero-knowledge means we don’t have the keys to view your data.
               </div>
             </div>
             <div className="card" style={{ padding: 14 }}>

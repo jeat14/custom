@@ -62,11 +62,14 @@
   - Goal: convert high-intent UK search traffic to one action (request the free UK guide).
   - H1: “Digital estate planning for UK families”
   - Fear-anchored subheadline: “What happens to your passwords, crypto, and online accounts if something happens to you?”
+  - Core reassurance line: “Store passwords, documents, and instructions securely — so your family can access what matters when they need it, without guessing or delays.”
   - Trust cues near CTA:
     - Add one short “why trust this?” line above CTA
     - Add a “what happens after I click?” line under CTA
     - Clearly differentiate from password managers (“not a password manager — designed for emergency and end-of-life access”)
     - Include one specificity anchor in security copy (e.g. client-side encryption, publicly documented model, UK-based)
+  - FAQ ordering:
+    - Put “Can Evernest access my data?” first
   - Tracking:
     - Capture UTMs on load and on CTA click
     - Track a single conversion event (guide request)
