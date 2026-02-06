@@ -3,6 +3,7 @@ import { AppLayout } from './ui/AppLayout'
 import { AdminNewsletter } from './ui/AdminNewsletter'
 import { AdminPendingVerifications } from './ui/AdminPendingVerifications'
 import { AdminSystemHealth } from './ui/AdminSystemHealth'
+import { DigitalEstatePlanning } from './ui/DigitalEstatePlanning'
 import { HeirHandover } from './ui/HeirHandover'
 import { HowItWorks } from './ui/HowItWorks'
 import { Landing } from './ui/Landing'
@@ -19,6 +20,7 @@ import { VaultAssetEntry } from './ui/VaultAssetEntry'
 import { ForProfessionals } from './ui/ForProfessionals'
 
 export const router = createBrowserRouter([
+  { path: '/digital-estate-planning', element: <DigitalEstatePlanning /> },
   { path: '/login', element: <Login /> },
   {
     path: '/',
