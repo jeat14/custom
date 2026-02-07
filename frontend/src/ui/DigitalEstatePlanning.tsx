@@ -332,6 +332,9 @@ export function DigitalEstatePlanning() {
 
         {showForm ? (
           <div style={{ marginTop: 16 }}>
+            <div className="muted" style={{ marginBottom: 10, fontSize: 13, lineHeight: 1.6 }}>
+              We only use your email to send the guide. We can’t access your accounts and never store passwords.
+            </div>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <input
                 ref={inputRef}

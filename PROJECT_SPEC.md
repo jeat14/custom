@@ -63,6 +63,7 @@
   - CTA flow:
     - First ask is help/insight (2-minute self-check)
     - Email comes after the user sees their result (guide delivery is the outcome)
+    - Add a one-line reassurance right before the email field (email used only to send the guide; never store passwords)
   - H1: “Digital estate planning for UK families”
   - Fear-anchored subheadline: “What happens to your passwords, crypto, and online accounts if something happens to you?”
   - Core reassurance line: “Store passwords, documents, and instructions securely — so your family can access what matters when they need it, without guessing or delays.”
