@@ -120,6 +120,7 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
     if (openedRef.current) return
     const openedThisSession = window.sessionStorage.getItem(sessionOpenedKey) === '1'
     if (!forceOpen && openedThisSession) return
+    if (!forceOpen) return
 
     const openOnce = (reason: string) => {
       if (openedRef.current) return
