@@ -15,6 +15,13 @@ function getUtmParams() {
 }
 
 export function DigitalEstatePlanning() {
+  const [showSelfCheck, setShowSelfCheck] = useState(false)
+  const [selfCheckStep, setSelfCheckStep] = useState(0)
+  const [selfCheckAnswers, setSelfCheckAnswers] = useState({
+    accessEmail: null as null | boolean,
+    accessPhone: null as null | boolean,
+    hasRecoveryKit: null as null | boolean,
+  })
   const [showForm, setShowForm] = useState(false)
   const [email, setEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -101,6 +108,18 @@ export function DigitalEstatePlanning() {
     }
   }, [showTurnstile, siteKey])
 
+  const selfCheckScore = [
+    selfCheckAnswers.accessEmail,
+    selfCheckAnswers.accessPhone,
+    selfCheckAnswers.hasRecoveryKit,
+  ].reduce((acc, v) => acc + (v ? 1 : 0), 0)
+
+  const selfCheckTotal = 3
+  const selfCheckReady =
+    selfCheckAnswers.accessEmail !== null &&
+    selfCheckAnswers.accessPhone !== null &&
+    selfCheckAnswers.hasRecoveryKit !== null
+
   const submit = async () => {
     setError(null)
     setMessage(null)
@@ -184,12 +203,15 @@ export function DigitalEstatePlanning() {
             type="button"
             className="primary"
             onClick={() => {
-              setShowForm(true)
-              window.setTimeout(() => inputRef.current?.focus(), 0)
-              capture('ads_landing_cta_click', { page: 'digital_estate_planning', cta: 'free_uk_guide', ...utms })
+              setShowSelfCheck(true)
+              setSelfCheckStep(0)
+              setShowForm(false)
+              setError(null)
+              setMessage(null)
+              capture('ads_landing_cta_click', { page: 'digital_estate_planning', cta: 'self_check_start', ...utms })
             }}
           >
-            Get the free UK digital estate guide
+            Start the 2-minute digital legacy self-check
           </button>
           <div className="muted" style={{ marginTop: 8, fontSize: 13 }}>
             You’ll get the free UK guide and can create a vault later if you choose.
@@ -199,6 +221,114 @@ export function DigitalEstatePlanning() {
         <div className="muted" style={{ marginTop: 12, fontSize: 13, lineHeight: 1.6 }}>
           Evernest is not a password manager — it’s designed for emergency and end-of-life access.
         </div>
+
+        {showSelfCheck ? (
+          <div style={{ marginTop: 16 }} className="card">
+            <div style={{ padding: 14 }}>
+              <div style={{ fontSize: 13, fontWeight: 750, letterSpacing: -0.1 }}>2-minute self-check</div>
+              <div className="muted" style={{ marginTop: 6, lineHeight: 1.6 }}>
+                Answer three quick questions. Then we’ll send you the free UK guide.
+              </div>
+
+              {selfCheckStep === 0 ? (
+                <div style={{ marginTop: 12 }}>
+                  <div style={{ fontSize: 13, fontWeight: 750, letterSpacing: -0.1 }}>If something happened today, could your family access your primary email?</div>
+                  <div style={{ marginTop: 10, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelfCheckAnswers((s) => ({ ...s, accessEmail: true }))
+                        setSelfCheckStep(1)
+                        capture('ads_landing_self_check_answer', { page: 'digital_estate_planning', q: 'access_email', a: 'yes', ...utms })
+                      }}
+                    >
+                      Yes
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelfCheckAnswers((s) => ({ ...s, accessEmail: false }))
+                        setSelfCheckStep(1)
+                        capture('ads_landing_self_check_answer', { page: 'digital_estate_planning', q: 'access_email', a: 'no', ...utms })
+                      }}
+                    >
+                      No / not sure
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
+              {selfCheckStep === 1 ? (
+                <div style={{ marginTop: 12 }}>
+                  <div style={{ fontSize: 13, fontWeight: 750, letterSpacing: -0.1 }}>Could they unlock your phone (or access your authenticator) without guessing?</div>
+                  <div style={{ marginTop: 10, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelfCheckAnswers((s) => ({ ...s, accessPhone: true }))
+                        setSelfCheckStep(2)
+                        capture('ads_landing_self_check_answer', { page: 'digital_estate_planning', q: 'access_phone', a: 'yes', ...utms })
+                      }}
+                    >
+                      Yes
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelfCheckAnswers((s) => ({ ...s, accessPhone: false }))
+                        setSelfCheckStep(2)
+                        capture('ads_landing_self_check_answer', { page: 'digital_estate_planning', q: 'access_phone', a: 'no', ...utms })
+                      }}
+                    >
+                      No / not sure
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
+              {selfCheckStep === 2 ? (
+                <div style={{ marginTop: 12 }}>
+                  <div style={{ fontSize: 13, fontWeight: 750, letterSpacing: -0.1 }}>Do you have an offline recovery kit (printed or stored safely offline)?</div>
+                  <div style={{ marginTop: 10, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelfCheckAnswers((s) => ({ ...s, hasRecoveryKit: true }))
+                        setSelfCheckStep(3)
+                        setShowForm(true)
+                        window.setTimeout(() => inputRef.current?.focus(), 0)
+                        capture('ads_landing_self_check_answer', { page: 'digital_estate_planning', q: 'has_recovery_kit', a: 'yes', ...utms })
+                      }}
+                    >
+                      Yes
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelfCheckAnswers((s) => ({ ...s, hasRecoveryKit: false }))
+                        setSelfCheckStep(3)
+                        setShowForm(true)
+                        window.setTimeout(() => inputRef.current?.focus(), 0)
+                        capture('ads_landing_self_check_answer', { page: 'digital_estate_planning', q: 'has_recovery_kit', a: 'no', ...utms })
+                      }}
+                    >
+                      No / not sure
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
+              {selfCheckStep >= 3 && selfCheckReady ? (
+                <div style={{ marginTop: 14 }}>
+                  <div style={{ fontSize: 13, fontWeight: 750, letterSpacing: -0.1 }}>Your result</div>
+                  <div className="muted" style={{ marginTop: 6, lineHeight: 1.6 }}>
+                    Score: {selfCheckScore}/{selfCheckTotal}. The free UK guide helps you close the gaps quickly and store instructions in a way your family can follow.
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
 
         {showForm ? (
           <div style={{ marginTop: 16 }}>
@@ -290,12 +420,15 @@ export function DigitalEstatePlanning() {
               type="button"
               className="primary"
               onClick={() => {
-                setShowForm(true)
-                window.setTimeout(() => inputRef.current?.focus(), 0)
-                capture('ads_landing_cta_click', { page: 'digital_estate_planning', cta: 'free_uk_guide_repeat', ...utms })
+                setShowSelfCheck(true)
+                setSelfCheckStep(0)
+                setShowForm(false)
+                setError(null)
+                setMessage(null)
+                capture('ads_landing_cta_click', { page: 'digital_estate_planning', cta: 'self_check_start_repeat', ...utms })
               }}
             >
-              Get the free UK digital estate guide
+              Start the 2-minute digital legacy self-check
             </button>
             <div className="muted" style={{ marginTop: 8, fontSize: 13 }}>
               You’ll get the free UK guide and can create a vault later if you choose.
