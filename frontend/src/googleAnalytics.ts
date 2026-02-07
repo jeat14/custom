@@ -21,15 +21,13 @@ export function initGoogleAnalytics() {
       window.dataLayer?.push(arguments as any)
     }
 
-  window.gtag('js', new Date())
   window.gtag('config', measurementId, { send_page_view: false })
 
-  const src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`
-  const existing = document.querySelector(`script[src="${src}"]`) as HTMLScriptElement | null
-  if (existing) return
+  const anyGtag = document.querySelector(`script[src^="https://www.googletagmanager.com/gtag/js?id="]`) as HTMLScriptElement | null
+  if (anyGtag) return
 
   const s = document.createElement('script')
-  s.src = src
+  s.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`
   s.async = true
   document.head.appendChild(s)
 }

@@ -90,3 +90,11 @@
 - Never commit secrets (keys/tokens) or log sensitive data.
 - Prefer smallest changes that match existing code style (inline styles are used widely in UI).
 - Verify changes with a production build before deploy.
+
+## Google Ads Tag (gtag.js)
+- Google Ads account tag ID: `AW-17938298248`.
+- Install the Google tag once in `frontend/index.html`, immediately after the opening `<head>` tag.
+- Do not add multiple Google tags/scripts; reuse the existing `window.gtag` for SPA page views and future conversions.
+- CSP must allow:
+  - `https://www.googletagmanager.com` (script)
+  - `https://www.googleadservices.com`, `https://googleads.g.doubleclick.net`, `https://stats.g.doubleclick.net`, `https://www.doubleclick.net` (requests/pixels)
