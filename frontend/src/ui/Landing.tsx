@@ -31,17 +31,18 @@ export function Landing() {
         </div>
 
         <div className="muted" style={{ marginTop: 8, lineHeight: 1.6 }}>
-          For individuals planning ahead, and for families who want peace of mind.
+          UK-focused. Designed for families who want clarity, not complexity. Prepare your digital life so the people you care about aren’t left
+          guessing.
         </div>
 
         <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <Link to="/login" style={{ textDecoration: 'none' }}>
+          <Link to="/how-it-works" style={{ textDecoration: 'none' }}>
             <button type="button" className="primary">
-              Sign In
+              See how it works
             </button>
           </Link>
-          <Link to="/how-it-works" style={{ textDecoration: 'none' }}>
-            <button type="button">How it works</button>
+          <Link to="/login" style={{ textDecoration: 'none' }}>
+            <button type="button">Sign In</button>
           </Link>
           <Link to="/pricing" style={{ textDecoration: 'none' }}>
             <button type="button">View Pricing</button>
@@ -55,6 +56,14 @@ export function Landing() {
           <Link to="/privacy" style={{ textDecoration: 'none' }}>
             <button type="button">Privacy</button>
           </Link>
+        </div>
+
+        <div style={{ marginTop: 14, lineHeight: 1.6 }}>
+          <div style={{ fontSize: 13, fontWeight: 750, letterSpacing: -0.1 }}>Why this exists</div>
+          <div className="muted" style={{ marginTop: 6, fontSize: 13, lineHeight: 1.7 }}>
+            Digital lives are messy. Passwords, accounts, subscriptions — none of it is designed to be handed over. Ignoring this problem can
+            create stress for families when they least need it.
+          </div>
         </div>
 
         <div className="muted" style={{ marginTop: 12, fontSize: 13, lineHeight: 1.7 }}>

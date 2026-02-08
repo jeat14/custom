@@ -8,9 +8,10 @@
 - Always provide an obvious way back to Home (Back button or Home link) on non-home pages.
 - Keep trust-building links visible, but avoid duplicate primary CTAs (one “primary” version, others secondary).
 - Keep wording calm, minimal, and reassuring; prefer short, clear sentences.
+- On the homepage, the primary CTA should be trust-building (e.g. “See how it works”), not “Sign In”.
 
 ## Trust Signals
-- Keep the Trustpilot widget in the footer as a lightweight trust cue (do not remove unless explicitly requested).
+- Until real reviews exist, do not display a review widget; show a small “Independent reviews coming soon” line in the footer instead.
 - Keep a simple, non-technical trust sentence on the homepage (e.g., “Built to help families safely store and pass on important digital information.”).
 - Keep a small copyright line at the bottom of the footer (e.g., “© {year} Evernest”).
 
