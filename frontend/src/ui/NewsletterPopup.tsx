@@ -113,6 +113,9 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
     if (session?.user?.id) return
     const url = new URL(window.location.href)
     const forceOpen = url.searchParams.get('popup') === '1'
+    const path = window.location.pathname
+    const disableOnPaths = new Set(['/digital-estate-planning', '/pricing'])
+    if (!forceOpen && disableOnPaths.has(path)) return
     const dismissUntilRaw = window.localStorage.getItem('evernest_newsletter_dismissed_until')
     const dismissUntil = dismissUntilRaw ? Number(dismissUntilRaw) : 0
     const now = Date.now()
@@ -120,7 +123,6 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
     if (openedRef.current) return
     const openedThisSession = window.sessionStorage.getItem(sessionOpenedKey) === '1'
     if (!forceOpen && openedThisSession) return
-    if (!forceOpen) return
 
     const openOnce = (reason: string) => {
       if (openedRef.current) return
@@ -130,42 +132,30 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
       capture('newsletter_popup_opened', { reason, page: window.location.pathname })
     }
 
-    const maxDelayMs = 30000
-    const minExitIntentDelayMs = 8000
-    const minScrollablePixels = 600
-    const timer = window.setTimeout(() => openOnce('delay'), maxDelayMs)
     if (forceOpen) openOnce('force')
 
-    let ticking = false
-    const onScroll = () => {
-      if (ticking) return
-      ticking = true
-      window.requestAnimationFrame(() => {
-        ticking = false
-        if (openedRef.current) return
-        const doc = document.documentElement
-        const scrollTop = window.scrollY || doc.scrollTop || 0
-        const scrollHeight = doc.scrollHeight || 0
-        const viewportHeight = window.innerHeight || 0
-        const maxScroll = Math.max(0, scrollHeight - viewportHeight)
-        if (maxScroll < minScrollablePixels) return
-        const progress = scrollTop / Math.max(1, maxScroll)
-        if (progress >= 0.5) openOnce('scroll_50pct')
-      })
+    const clicksToOpen = 6
+    let clickCount = 0
+
+    const onInteraction = () => {
+      if (openedRef.current) return
+      clickCount += 1
+      if (clickCount >= clicksToOpen) openOnce(`click_${clicksToOpen}`)
     }
 
-    const onMouseOut = (e: MouseEvent) => {
-      if (Date.now() - now < minExitIntentDelayMs) return
-      const nearTop = typeof e.clientY === 'number' && e.clientY <= 0
-      if (nearTop) openOnce('exit_intent')
+    const usePointer = typeof (window as any).PointerEvent === 'function'
+    if (usePointer) {
+      document.addEventListener('pointerdown', onInteraction, { passive: true })
+    } else {
+      document.addEventListener('click', onInteraction, { passive: true })
     }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    document.addEventListener('mouseout', onMouseOut)
 
     return () => {
-      window.clearTimeout(timer)
-      window.removeEventListener('scroll', onScroll)
-      document.removeEventListener('mouseout', onMouseOut)
+      if (usePointer) {
+        document.removeEventListener('pointerdown', onInteraction as any)
+      } else {
+        document.removeEventListener('click', onInteraction as any)
+      }
     }
   }, [session?.user?.id])
 

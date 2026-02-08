@@ -36,7 +36,9 @@
 - Offer: “Free UK guide: Protect your important digital documents”.
 - Deliver the guide immediately via email after signup; link to `/uk-guide` (or override via `LEAD_MAGNET_GUIDE_URL`).
 - Emails are stored in Supabase `public.newsletter_signups`.
-- Status: popup is currently disabled for acquisition traffic; prefer the self-check flow on `/digital-estate-planning`.
+- Trigger:
+  - Popup opens after 6 user clicks/taps (only once per browser session).
+  - Disabled on `/digital-estate-planning` and `/pricing` to avoid cannibalising high-intent flows.
 - Debug: force open via `?popup=1`.
 - Anti-spam:
   - Use Cloudflare Turnstile on the client.

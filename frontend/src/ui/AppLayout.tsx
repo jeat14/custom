@@ -6,6 +6,7 @@ import { useSupabaseSession } from '../hooks/useSupabaseSession'
 import { FeedbackWidget } from './FeedbackWidget'
 import { capture } from '../analytics'
 import { initGoogleAnalytics, trackGooglePageView } from '../googleAnalytics'
+import { NewsletterPopup } from './NewsletterPopup'
 
 export function AppLayout() {
   useVaultCheckInOncePerSession()
@@ -114,6 +115,7 @@ export function AppLayout() {
       <div style={{ flex: 1 }}>
         <Outlet />
       </div>
+      <NewsletterPopup contactEmail={contactEmail ?? null} />
       <footer
         style={{
           borderTop: '1px solid var(--border)',
