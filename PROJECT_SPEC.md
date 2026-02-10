@@ -116,6 +116,8 @@
   - Implemented as Supabase Edge Function `weekly-guidance` protected by `WEEKLY_GUIDANCE_CRON_TOKEN`.
   - Selects recipients from `public.newsletter_signups` where `weekly_opt_in = true` and `unsubscribed_at is null`.
   - Avoids duplicates using `last_weekly_sent_at` (won’t send more than once per ~6 days).
+- Scheduling:
+  - Trigger weekly by calling `weekly-guidance` with `?token=<WEEKLY_GUIDANCE_CRON_TOKEN>` from any cron service.
 - Unsubscribe:
   - Each email includes an unsubscribe link to Supabase Edge Function `weekly-unsubscribe` using `unsubscribe_token`.
   - Unsubscribe sets `weekly_opt_in = false` and `unsubscribed_at = now()`.

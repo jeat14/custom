@@ -35,19 +35,24 @@ Optional:
 
 ## 4) Set GitHub Action secrets (for scheduling)
 
-Repo Settings → Secrets and variables → Actions:
+You have two simple options:
 
-- `SUPABASE_URL` (your project URL, e.g. `https://<ref>.supabase.co`)
-- `WEEKLY_GUIDANCE_CRON_TOKEN` (must match the Supabase secret of the same name)
+### Option A (simplest): any cron service
 
-The workflow is:
-- `.github/workflows/weekly-guidance.yml`
+Schedule a weekly request to:
 
-Default schedule: Mondays 09:00 UTC (cron).
+`https://<project-ref>.supabase.co/functions/v1/weekly-guidance?token=<WEEKLY_GUIDANCE_CRON_TOKEN>`
+
+Use GET or POST. This works with basic cron services because the token can be passed via query string.
+
+### Option B: GitHub Actions
+
+Create a workflow file at `.github/workflows/weekly-guidance.yml` that runs weekly and calls the function.
+
+Note: pushing workflow files requires GitHub credentials with `workflow` scope. If your token doesn’t have that scope, add the file via the GitHub UI.
 
 ## 5) Dry run
 
 Call the function with `dry_run=1` (it will select recipients and return counts, but won’t send):
 
 - `POST /functions/v1/weekly-guidance?dry_run=1&token=<WEEKLY_GUIDANCE_CRON_TOKEN>`
-
