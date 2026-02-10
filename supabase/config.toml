@@ -6,3 +6,9 @@ verify_jwt = false
 
 [functions.resend-inbound-email]
 verify_jwt = false
+
+[functions.weekly-guidance]
+verify_jwt = false
+
+[functions.weekly-unsubscribe]
+verify_jwt = false

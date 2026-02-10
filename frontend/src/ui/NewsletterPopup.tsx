@@ -8,6 +8,7 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
   const { session } = useSupabaseSession()
   const [isOpen, setIsOpen] = useState(false)
   const [email, setEmail] = useState('')
+  const [weeklyOptIn, setWeeklyOptIn] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [showGuideLink, setShowGuideLink] = useState(false)
@@ -51,6 +52,7 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
     setTurnstileToken('')
     setShowGuideLink(false)
     setDebugDetails(null)
+    setWeeklyOptIn(false)
   }, [isOpen])
 
   useEffect(() => {
@@ -210,6 +212,7 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
           email: addr,
           token: turnstileToken,
           source: 'lead_magnet_uk_guide',
+          weekly_opt_in: weeklyOptIn === true,
           path: window.location.pathname,
           referrer: document.referrer || null,
           user_agent: navigator.userAgent || null,
@@ -307,6 +310,16 @@ export function NewsletterPopup(props: { contactEmail?: string | null }) {
             {isSending ? 'Saving…' : 'Send me my guide'}
           </button>
         </div>
+
+        <label className="muted" style={{ marginTop: 10, display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 12, lineHeight: 1.55 }}>
+          <input
+            type="checkbox"
+            checked={weeklyOptIn}
+            onChange={(e) => setWeeklyOptIn(e.target.checked)}
+            style={{ marginTop: 2 }}
+          />
+          <span>Send me a short weekly reminder (optional).</span>
+        </label>
 
         {siteKey && (showTurnstile || Boolean(turnstileToken)) ? (
           <div ref={turnstileRef} style={{ marginTop: 12, opacity: 0.88, transform: 'scale(0.94)', transformOrigin: '0 0' }} />

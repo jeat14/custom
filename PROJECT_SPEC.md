@@ -40,6 +40,9 @@
   - Popup opens after 6 user clicks/taps (only once per browser session).
   - Disabled on `/digital-estate-planning` and `/pricing` to avoid cannibalising high-intent flows.
 - Debug: force open via `?popup=1`.
+- Weekly reminder opt-in:
+  - The signup UI may offer an optional checkbox: “Send me a short weekly reminder”.
+  - Weekly emails must only go to rows with `weekly_opt_in = true`.
 - Anti-spam:
   - Use Cloudflare Turnstile on the client.
   - Keep Turnstile enabled but visually de-emphasized (hidden until CTA click; compact).
@@ -106,3 +109,15 @@
 - CSP must allow:
   - `https://www.googletagmanager.com` (script)
   - `https://www.googleadservices.com`, `https://googleads.g.doubleclick.net`, `https://stats.g.doubleclick.net`, `https://www.doubleclick.net` (requests/pixels)
+
+## Weekly Reminder Emails
+- Purpose: one calm, trust-first email per week (60–90 seconds to read).
+- Sending:
+  - Implemented as Supabase Edge Function `weekly-guidance` protected by `WEEKLY_GUIDANCE_CRON_TOKEN`.
+  - Selects recipients from `public.newsletter_signups` where `weekly_opt_in = true` and `unsubscribed_at is null`.
+  - Avoids duplicates using `last_weekly_sent_at` (won’t send more than once per ~6 days).
+- Unsubscribe:
+  - Each email includes an unsubscribe link to Supabase Edge Function `weekly-unsubscribe` using `unsubscribe_token`.
+  - Unsubscribe sets `weekly_opt_in = false` and `unsubscribed_at = now()`.
+- Schema:
+  - Apply `supabase/weekly_guidance.sql` to add weekly fields to `public.newsletter_signups`.

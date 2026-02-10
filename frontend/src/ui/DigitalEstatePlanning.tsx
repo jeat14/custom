@@ -24,6 +24,7 @@ export function DigitalEstatePlanning() {
   })
   const [showForm, setShowForm] = useState(false)
   const [email, setEmail] = useState('')
+  const [weeklyOptIn, setWeeklyOptIn] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [isSending, setIsSending] = useState(false)
@@ -151,6 +152,7 @@ export function DigitalEstatePlanning() {
           email: addr,
           token: turnstileToken,
           source: 'ads_digital_estate_planning',
+          weekly_opt_in: weeklyOptIn === true,
           path: window.location.pathname,
           referrer: document.referrer || null,
           user_agent: navigator.userAgent || null,
@@ -349,6 +351,17 @@ export function DigitalEstatePlanning() {
                 {isSending ? 'Saving…' : 'Get the free UK digital estate guide'}
               </button>
             </div>
+
+            <label className="muted" style={{ marginTop: 10, display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 12, lineHeight: 1.55 }}>
+              <input
+                type="checkbox"
+                checked={weeklyOptIn}
+                onChange={(e) => setWeeklyOptIn(e.target.checked)}
+                style={{ marginTop: 2 }}
+              />
+              <span>Send me a short weekly reminder (optional).</span>
+            </label>
+
             {siteKey && (showTurnstile || Boolean(turnstileToken)) ? (
               <div
                 ref={turnstileRef}

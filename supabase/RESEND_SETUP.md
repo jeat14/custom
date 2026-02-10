@@ -4,6 +4,8 @@ Evernest sends emails from Supabase Edge Functions:
 
 - `evaluate-switches` (deadman reminders + release notifications)
 - `admin-verification-email` (rejection reason emails to heirs)
+- `newsletter-signup` (lead magnet guide delivery)
+- `weekly-guidance` (optional weekly reminder emails)
 
 ## Required Secrets
 
@@ -16,6 +18,7 @@ Optional:
 
 - `APP_URL` (included in email bodies; recommended to point at your deployed app login URL)
 - `RESEND_GUIDE_FROM_EMAIL` (override sender for the lead magnet guide email)
+- `RESEND_WEEKLY_FROM_EMAIL` (override sender for weekly reminder emails)
 
 ## Notes
 

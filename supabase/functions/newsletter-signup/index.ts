@@ -143,6 +143,7 @@ serve(async (req: Request) => {
     email?: string
     token?: string
     source?: string | null
+    weekly_opt_in?: boolean | null
     path?: string | null
     referrer?: string | null
     user_agent?: string | null
@@ -150,6 +151,7 @@ serve(async (req: Request) => {
 
   const email = (body?.email ?? '').trim().toLowerCase()
   const token = (body?.token ?? '').trim()
+  const weeklyOptIn = body?.weekly_opt_in === true
   if (!looksLikeEmail(email)) return jsonResponse(400, { error: 'Invalid email' })
   if (!token) return jsonResponse(400, { error: 'Missing token' })
 
@@ -165,16 +167,44 @@ serve(async (req: Request) => {
     auth: { persistSession: false, autoRefreshToken: false },
   })
 
-  const { error } = await supabase.from('newsletter_signups').insert({
-    email,
-    source: body?.source ?? null,
-    path: body?.path ?? null,
-    referrer: body?.referrer ?? null,
-    user_agent: body?.user_agent ?? null,
-  })
+  const insertWithWeekly = async () =>
+    await supabase.from('newsletter_signups').insert({
+      email,
+      source: body?.source ?? null,
+      weekly_opt_in: weeklyOptIn,
+      path: body?.path ?? null,
+      referrer: body?.referrer ?? null,
+      user_agent: body?.user_agent ?? null,
+    })
 
-  const duplicate = Boolean(error && (error as any).code === '23505')
-  if (error && !duplicate) return jsonResponse(500, { error: 'Failed to save signup' })
+  const insertWithoutWeekly = async () =>
+    await supabase.from('newsletter_signups').insert({
+      email,
+      source: body?.source ?? null,
+      path: body?.path ?? null,
+      referrer: body?.referrer ?? null,
+      user_agent: body?.user_agent ?? null,
+    })
+
+  const isMissingWeeklyColumn = (err: any) => {
+    const code = String(err?.code ?? '')
+    const msg = String(err?.message ?? '')
+    return code === '42703' || msg.toLowerCase().includes('weekly_opt_in') || msg.toLowerCase().includes('column') && msg.toLowerCase().includes('does not exist')
+  }
+
+  let insertResp = await insertWithWeekly()
+  if (insertResp.error && isMissingWeeklyColumn(insertResp.error)) {
+    insertResp = await insertWithoutWeekly()
+  }
+
+  const duplicate = Boolean(insertResp.error && (insertResp.error as any).code === '23505')
+  if (insertResp.error && !duplicate) return jsonResponse(500, { error: 'Failed to save signup' })
+  if (duplicate && weeklyOptIn) {
+    const upd = await supabase.from('newsletter_signups').update({ weekly_opt_in: true, unsubscribed_at: null }).eq('email_normalized', email)
+    if (upd.error && isMissingWeeklyColumn(upd.error)) {
+      await supabase.from('newsletter_signups').update({ unsubscribed_at: null }).eq('email_normalized', email)
+    }
+  }
 
   const urlForGuide = guideUrl()
   const guideFrom = (Deno.env.get('RESEND_GUIDE_FROM_EMAIL') ?? '').trim()
