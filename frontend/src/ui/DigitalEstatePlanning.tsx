@@ -352,12 +352,27 @@ export function DigitalEstatePlanning() {
               </button>
             </div>
 
-            <label className="muted" style={{ marginTop: 10, display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 12, lineHeight: 1.55 }}>
+            <label
+              className="muted"
+              style={{
+                marginTop: 10,
+                display: 'flex',
+                gap: 10,
+                alignItems: 'flex-start',
+                fontSize: 13,
+                lineHeight: 1.55,
+                cursor: 'pointer',
+                padding: '10px 10px',
+                border: '1px solid var(--border)',
+                borderRadius: 12,
+                userSelect: 'none',
+              }}
+            >
               <input
                 type="checkbox"
                 checked={weeklyOptIn}
                 onChange={(e) => setWeeklyOptIn(e.target.checked)}
-                style={{ marginTop: 2 }}
+                style={{ marginTop: 2, width: 18, height: 18, flex: '0 0 auto', transform: 'scale(1.15)', transformOrigin: '0 0' }}
               />
               <span>Send me a short weekly reminder (optional).</span>
             </label>
