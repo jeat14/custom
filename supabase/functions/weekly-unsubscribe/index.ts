@@ -1,3 +1,4 @@
+/// <reference path="../deno.d.ts" />
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4'
 
@@ -78,4 +79,3 @@ serve(async (req: Request) => {
     { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
   )
 })
-

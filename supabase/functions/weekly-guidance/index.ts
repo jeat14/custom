@@ -1,6 +1,6 @@
+/// <reference path="../deno.d.ts" />
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4'
-import { sendResendEmail } from '../_shared/resend.ts'
 
 type Json = Record<string, unknown>
 
@@ -8,6 +8,62 @@ type SignupRow = {
   id: string
   email: string
   unsubscribe_token: string
+}
+
+type SendParams = {
+  to: string
+  subject: string
+  html: string
+  text?: string
+  replyTo?: string
+  from?: string
+}
+
+type SendResult =
+  | { ok: true }
+  | { ok: false; status?: number; error: string; body?: string }
+  | { skipped: true; missing: string[] }
+
+async function sendResendEmail(params: SendParams): Promise<SendResult> {
+  const denoEnv = (globalThis as any)?.Deno?.env
+  const apiKey = denoEnv?.get?.('RESEND_API_KEY')?.trim?.() ?? ''
+  const from = (params.from ?? denoEnv?.get?.('RESEND_FROM_EMAIL')?.trim?.() ?? '').trim()
+  const replyTo = (params.replyTo ?? denoEnv?.get?.('RESEND_REPLY_TO_EMAIL')?.trim?.() ?? '').trim()
+
+  const missing: string[] = []
+  if (!apiKey) missing.push('RESEND_API_KEY')
+  if (!from) missing.push('RESEND_FROM_EMAIL')
+  if (missing.length) return { skipped: true, missing }
+
+  const sendOnce = async (fromEmail: string): Promise<SendResult> => {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: fromEmail,
+        to: params.to,
+        subject: params.subject,
+        html: params.html,
+        ...(params.text ? { text: params.text } : {}),
+        ...(replyTo ? { reply_to: replyTo } : {}),
+      }),
+    })
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => '')
+      return { ok: false, status: res.status, error: 'Resend API error', body: text }
+    }
+
+    return { ok: true }
+  }
+
+  const first = await sendOnce(from)
+  if ((first as any)?.ok) return first
+
+  return first
 }
 
 function jsonResponse(status: number, body: Json) {
@@ -111,99 +167,104 @@ serve(async (req: Request) => {
   const respond = (status: number, body: Json) =>
     isHead ? new Response(null, { status, headers: { 'Content-Type': 'application/json' } }) : jsonResponse(status, body)
 
-  if (req.method !== 'POST' && req.method !== 'GET' && req.method !== 'HEAD') return respond(405, { error: 'Method not allowed' })
+  try {
+    if (req.method !== 'POST' && req.method !== 'GET' && req.method !== 'HEAD') return respond(405, { error: 'Method not allowed' })
 
-  const cronToken = (Deno.env.get('WEEKLY_GUIDANCE_CRON_TOKEN') ?? '').trim()
-  const authHeader = (req.headers.get('authorization') ?? '').trim()
-  const xCronToken = (req.headers.get('x-cron-token') ?? req.headers.get('x-evernest-cron-token') ?? '').trim()
-  const url = new URL(req.url)
-  const queryToken = (url.searchParams.get('token') ?? '').trim()
-  const dryRun = (url.searchParams.get('dry_run') ?? '').trim() === '1'
+    const cronToken = (Deno.env.get('WEEKLY_GUIDANCE_CRON_TOKEN') ?? '').trim()
+    const authHeader = (req.headers.get('authorization') ?? '').trim()
+    const xCronToken = (req.headers.get('x-cron-token') ?? req.headers.get('x-evernest-cron-token') ?? '').trim()
+    const url = new URL(req.url)
+    const queryToken = (url.searchParams.get('token') ?? '').trim()
+    const dryRun = (url.searchParams.get('dry_run') ?? '').trim() === '1'
 
-  const bearer = authHeader.startsWith('Bearer ') ? authHeader.slice('Bearer '.length).trim() : ''
-  const authorized =
-    (!!cronToken && bearer === cronToken) ||
-    (!!cronToken && xCronToken === cronToken) ||
-    (!!cronToken && queryToken === cronToken)
+    const bearer = authHeader.startsWith('Bearer ') ? authHeader.slice('Bearer '.length).trim() : ''
+    const authorized =
+      (!!cronToken && bearer === cronToken) ||
+      (!!cronToken && xCronToken === cronToken) ||
+      (!!cronToken && queryToken === cronToken)
 
-  if (!authorized) return respond(401, { error: 'Unauthorized' })
+    if (!authorized) return respond(401, { error: cronToken ? 'Unauthorized' : 'Missing WEEKLY_GUIDANCE_CRON_TOKEN' })
 
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')
-  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-  if (!supabaseUrl || !serviceRoleKey) return respond(500, { error: 'Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY' })
+    const supabaseUrl = (Deno.env.get('SUPABASE_URL') ?? '').trim()
+    const serviceRoleKey = (Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '').trim()
+    if (!supabaseUrl || !serviceRoleKey) return respond(500, { error: 'Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY' })
 
-  const supabase = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  })
-
-  const startedAt = new Date()
-  const appUrl = (Deno.env.get('APP_URL') ?? '').trim()
-  const from = (Deno.env.get('RESEND_WEEKLY_FROM_EMAIL') ?? '').trim()
-  const now = new Date()
-  const cutoff = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000)
-  const template = guidanceTemplate(weekIndex(now.getTime()), appUrl)
-
-  const { data: candidates, error } = await supabase
-    .from('newsletter_signups')
-    .select('id,email,unsubscribe_token')
-    .is('unsubscribed_at', null)
-    .eq('weekly_opt_in', true)
-    .or(`last_weekly_sent_at.is.null,last_weekly_sent_at.lt.${cutoff.toISOString()}`)
-    .order('created_at', { ascending: true })
-    .limit(500)
-
-  if (error) return respond(500, { error: 'Failed to load recipients', details: String((error as any)?.message ?? error) })
-
-  const rows = (candidates ?? []) as SignupRow[]
-  let sent = 0
-  let skipped = 0
-  const failures: Array<{ id: string; email: string; error: string }> = []
-
-  for (const row of rows) {
-    const unsub = unsubscribeUrl({ supabaseUrl, token: row.unsubscribe_token })
-    const footerHtml = `Evernest • Calm weekly reminder • <a href="${escapeHtml(unsub)}" style="color:#6b7280;text-decoration:underline">Unsubscribe</a>`
-
-    if (dryRun) {
-      skipped += 1
-      continue
-    }
-
-    const result = await sendResendEmail({
-      to: row.email,
-      subject: template.subject,
-      html: emailShell({ title: template.title, bodyHtml: template.bodyHtml, footerHtml }),
-      text: `${template.title}\n\nTo unsubscribe: ${unsub}`,
-      ...(from ? { from } : {}),
+    const supabase = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
     })
 
-    if ((result as any)?.ok) {
-      sent += 1
-      await supabase.from('newsletter_signups').update({ last_weekly_sent_at: now.toISOString() }).eq('id', row.id)
-      continue
+    const startedAt = new Date()
+    const appUrl = (Deno.env.get('APP_URL') ?? '').trim()
+    const from = (Deno.env.get('RESEND_WEEKLY_FROM_EMAIL') ?? '').trim()
+    const now = new Date()
+    const cutoff = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000)
+    const template = guidanceTemplate(weekIndex(now.getTime()), appUrl)
+
+    const { data: candidates, error } = await supabase
+      .from('newsletter_signups')
+      .select('id,email,unsubscribe_token')
+      .is('unsubscribed_at', null)
+      .eq('weekly_opt_in', true)
+      .or(`last_weekly_sent_at.is.null,last_weekly_sent_at.lt.${cutoff.toISOString()}`)
+      .order('created_at', { ascending: true })
+      .limit(500)
+
+    if (error) return respond(500, { error: 'Failed to load recipients', details: String((error as any)?.message ?? error) })
+
+    const rows = (candidates ?? []) as SignupRow[]
+    let sent = 0
+    let skipped = 0
+    const failures: Array<{ id: string; email: string; error: string }> = []
+
+    for (const row of rows) {
+      const unsub = unsubscribeUrl({ supabaseUrl, token: row.unsubscribe_token })
+      const footerHtml = `Evernest • Calm weekly reminder • <a href="${escapeHtml(unsub)}" style="color:#6b7280;text-decoration:underline">Unsubscribe</a>`
+
+      if (dryRun) {
+        skipped += 1
+        continue
+      }
+
+      const result = await sendResendEmail({
+        to: row.email,
+        subject: template.subject,
+        html: emailShell({ title: template.title, bodyHtml: template.bodyHtml, footerHtml }),
+        text: `${template.title}\n\nTo unsubscribe: ${unsub}`,
+        ...(from ? { from } : {}),
+      })
+
+      if ((result as any)?.ok) {
+        sent += 1
+        await supabase.from('newsletter_signups').update({ last_weekly_sent_at: now.toISOString() }).eq('id', row.id)
+        continue
+      }
+
+      if ((result as any)?.skipped) {
+        failures.push({ id: row.id, email: row.email, error: `Missing env: ${((result as any)?.missing ?? []).join(',')}` })
+        continue
+      }
+
+      failures.push({
+        id: row.id,
+        email: row.email,
+        error: `Resend error status=${String((result as any)?.status ?? '')}`,
+      })
     }
 
-    if ((result as any)?.skipped) {
-      failures.push({ id: row.id, email: row.email, error: `Missing env: ${((result as any)?.missing ?? []).join(',')}` })
-      continue
-    }
-
-    failures.push({
-      id: row.id,
-      email: row.email,
-      error: `Resend error status=${String((result as any)?.status ?? '')}`,
+    return respond(200, {
+      ok: true,
+      dry_run: dryRun,
+      attempted: rows.length,
+      sent,
+      skipped,
+      failures,
+      template: { subject: template.subject, title: template.title },
+      started_at: startedAt.toISOString(),
+      finished_at: new Date().toISOString(),
     })
+  } catch (err) {
+    const message = String((err as any)?.message ?? err)
+    const stack = String((err as any)?.stack ?? '')
+    return respond(500, { error: 'Unhandled error', message, ...(stack ? { stack } : {}) })
   }
-
-  return respond(200, {
-    ok: true,
-    dry_run: dryRun,
-    attempted: rows.length,
-    sent,
-    skipped,
-    failures,
-    template: { subject: template.subject, title: template.title },
-    started_at: startedAt.toISOString(),
-    finished_at: new Date().toISOString(),
-  })
 })
-
