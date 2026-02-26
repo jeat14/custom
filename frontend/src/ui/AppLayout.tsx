@@ -105,7 +105,7 @@ export function AppLayout() {
                 </button>
               </>
             ) : (
-              <button type="button" className="primary" onClick={() => navigate('/login')}>
+              <button type="button" className={location.pathname === '/' ? undefined : 'primary'} onClick={() => navigate('/login')}>
                 Sign In
               </button>
             )}
