@@ -31,6 +31,8 @@ export function DigitalEstatePlanning() {
   const [turnstileToken, setTurnstileToken] = useState('')
   const [showTurnstile, setShowTurnstile] = useState(false)
   const inputRef = useRef<HTMLInputElement | null>(null)
+  const selfCheckAnchorRef = useRef<HTMLDivElement | null>(null)
+  const openedFromDeepLinkRef = useRef(false)
   const turnstileRef = useRef<HTMLDivElement | null>(null)
   const turnstileWidgetIdRef = useRef<any>(null)
   const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined
@@ -53,6 +55,20 @@ export function DigitalEstatePlanning() {
       document.head.appendChild(m)
     }
   }, [utms])
+
+  useEffect(() => {
+    const url = new URL(window.location.href)
+    const wantsSelfCheck = url.searchParams.get('self_check') === '1' || url.hash === '#self-check'
+    if (!wantsSelfCheck) return
+    if (openedFromDeepLinkRef.current) return
+    openedFromDeepLinkRef.current = true
+    setShowSelfCheck(true)
+    setSelfCheckStep(0)
+    setShowForm(false)
+    setError(null)
+    setMessage(null)
+    window.setTimeout(() => selfCheckAnchorRef.current?.scrollIntoView({ behavior: 'auto', block: 'start' }), 0)
+  }, [])
 
   useEffect(() => {
     if (!showTurnstile) return
@@ -210,6 +226,7 @@ export function DigitalEstatePlanning() {
               setShowForm(false)
               setError(null)
               setMessage(null)
+              window.setTimeout(() => selfCheckAnchorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0)
               capture('ads_landing_cta_click', { page: 'digital_estate_planning', cta: 'self_check_start', ...utms })
             }}
           >
@@ -223,6 +240,8 @@ export function DigitalEstatePlanning() {
         <div className="muted" style={{ marginTop: 12, fontSize: 13, lineHeight: 1.6 }}>
           Evernest is not a password manager — it’s designed for emergency and end-of-life access.
         </div>
+
+        <div id="self-check" ref={selfCheckAnchorRef} />
 
         {showSelfCheck ? (
           <div style={{ marginTop: 16 }} className="card">

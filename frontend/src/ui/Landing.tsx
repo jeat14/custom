@@ -36,7 +36,7 @@ export function Landing() {
             </div>
 
             <div style={{ marginTop: 14, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-              <Link to="/digital-estate-planning" style={{ textDecoration: 'none' }}>
+              <Link to="/digital-estate-planning?self_check=1#self-check" style={{ textDecoration: 'none' }}>
                 <button type="button" className="primary">
                   Start the 2-minute digital legacy self-check
                 </button>
