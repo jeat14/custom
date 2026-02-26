@@ -38,14 +38,14 @@ export function Landing() {
             <div style={{ marginTop: 14, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
               <Link to="/digital-estate-planning" style={{ textDecoration: 'none' }}>
                 <button type="button" className="primary">
-                  Start the 2-minute self-check
+                  Start the 2-minute digital legacy self-check
                 </button>
               </Link>
               <Link to="/how-it-works" style={{ textDecoration: 'none' }}>
                 <button type="button">See how it works</button>
               </Link>
               <Link to="/login" style={{ textDecoration: 'none', fontSize: 13, color: 'inherit', opacity: 0.9 }}>
-                Sign in
+                Already have a vault? Sign in
               </Link>
             </div>
 
